@@ -1,0 +1,12 @@
+{
+  "aws_access_key_id": "***",
+  "aws_secret_access_key": "***",
+  "bucket_name": "mirror-bucket-name",
+  "bucket_region": "ap-southeast-2",
+  "upstream_repositories": [
+    "https://dl01.fedoraproject.org/pub/fedora/linux/updates/31/Modular/x86_64/",
+    "https://dl01.fedoraproject.org/pub/fedora/linux/releases/31/Modular/x86_64/os/",
+    "https://dl01.fedoraproject.org/pub/fedora/linux/releases/31/Everything/x86_64/os/",
+    "https://dl01.fedoraproject.org/pub/fedora/linux/updates/31/Everything/x86_64/"
+  ]
+}

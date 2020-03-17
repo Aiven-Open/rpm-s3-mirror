@@ -11,11 +11,11 @@ setup(
     author_email="willcoe@aiven.io",
     url="https://github.com/aiven/fedora_s3_mirror",
     install_requires=[
-        "defusedxml>=0.6.0",
-        "requests>=2.23.0",
-        "python-dateutil>=2.8.1",
-        "boto3>=1.12.21",
-        "lxml>=4.5.0",
+        "defusedxml",
+        "requests",
+        "python-dateutil",
+        "boto3",
+        "lxml",
     ],
     entry_points={
         "console_scripts": [
