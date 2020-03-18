@@ -38,7 +38,7 @@ class YUMMirror:
             mirror_metadata = mirror_repository.parse_metadata()
             new_packages = set(upstream_metadata.package_list).difference(set(mirror_metadata.package_list))
 
-            # Sync upstream with our mirror.
+            # Sync our mirror with upstream.
             if new_packages:
                 self.s3.sync_packages(
                     base_url=upstream_repository.base_url,
