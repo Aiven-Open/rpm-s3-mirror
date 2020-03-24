@@ -23,20 +23,24 @@ class YUMMirror:
 
     def sync(self):
         for upstream_repository in self.repositories:
-            self.log.info("Syncing repository: %s", upstream_repository.base_url)
-
-            # If the upstream repomd.xml file was updated after the last time we updated our
-            # mirror repomd.xml file then there is probably some work to do.
-            mirror_repository = YUMRepository(base_url=self._build_s3_url(upstream_repository))
-            last_check_time = self.s3.repomd_update_time(base_url=mirror_repository.base_url)
-            if not upstream_repository.has_updates(since=last_check_time):
-                self.log.info(f"Skipping repository with no updates since: {last_check_time}")
-                continue
-
-            # Extract our metadata and detect any new/updated packages.
             upstream_metadata = upstream_repository.parse_metadata()
-            mirror_metadata = mirror_repository.parse_metadata()
-            new_packages = set(upstream_metadata.package_list).difference(set(mirror_metadata.package_list))
+
+            if self.config.bootstrap:
+                self.log.info("Bootstrapping repository: %s", upstream_repository.base_url)
+                new_packages = upstream_metadata.package_list
+            else:
+                self.log.info("Syncing repository: %s", upstream_repository.base_url)
+                # If the upstream repomd.xml file was updated after the last time we updated our
+                # mirror repomd.xml file then there is probably some work to do.
+                mirror_repository = YUMRepository(base_url=self._build_s3_url(upstream_repository))
+                last_check_time = self.s3.repomd_update_time(base_url=mirror_repository.base_url)
+                if not upstream_repository.has_updates(since=last_check_time):
+                    self.log.info(f"Skipping repository with no updates since: {last_check_time}")
+                    continue
+
+                # Extract our metadata and detect any new/updated packages.
+                mirror_metadata = mirror_repository.parse_metadata()
+                new_packages = set(upstream_metadata.package_list).difference(set(mirror_metadata.package_list))
 
             # Sync our mirror with upstream.
             if new_packages:
@@ -44,6 +48,12 @@ class YUMMirror:
                     base_url=upstream_repository.base_url,
                     upstream_repodata=upstream_metadata.repodata,
                     upstream_packages=new_packages,
+                    # If we are bootstrapping the s3 repo, it is worth checking if the package already exists as if the
+                    # process is interrupted halfway through we would have to do a lot of potentially useless work. Once
+                    # we have completed bootstrapping and are just running a sync we don't benefit from checking as it
+                    # slows things down for no good reason (we expect the packages to be there already and if not
+                    # it is a bug of some kind).
+                    skip_existing=self.config.bootstrap
                 )
             self.log.info("Updated mirror with %s packages", len(new_packages))
 

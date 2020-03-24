@@ -14,6 +14,7 @@ REQUIRED = {
 DEFAULTS = {
     "scratch_dir": "/var/tmp/",
     "max_workers": 4,
+    "bootstrap": False,
 }
 
 
@@ -29,6 +30,7 @@ class Config:
     scratch_dir = None
     max_workers = None
     upstream_repositories = None
+    bootstrap = None
     _config = DEFAULTS
 
     def load(self):
@@ -50,7 +52,8 @@ class Config:
 
 class ENVConfig(Config):
     def _populate_required(self):
-        for key in sorted(REQUIRED):
+        config_options = list(REQUIRED) + list(DEFAULTS)
+        for key in sorted(config_options):
             value = os.environ.get(key.upper())
             if not value:
                 if key not in DEFAULTS:
@@ -61,6 +64,8 @@ class ENVConfig(Config):
                 value = value.split(",")
             elif key == "max_workers":
                 value = int(value)
+            elif key == "bootstrap":
+                value = True if value.lower() == "true" else False
             self._config[key] = value
 
 
