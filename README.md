@@ -36,3 +36,11 @@ where config.json is something like:
   ]
 }
 ```
+
+
+
+# TODO:
+
+* refuse to sync from mirrors that are not using TLS
+* remove the util.py file as it is not needed (the code in there is not shared)
+* validate the checksums of the various metadata files
