@@ -90,6 +90,8 @@ RepodataSection = namedtuple("RepodataSection", ["url", "location", "destination
 
 class YUMRepository:
     def __init__(self, base_url: str):
+        if not base_url.startswith("https://"):
+            raise ValueError("Only https upstream repositories can be synced from")
         if not base_url.endswith("/"):
             base_url += "/"
         self.base_url = base_url
