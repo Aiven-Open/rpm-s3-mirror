@@ -73,14 +73,6 @@ class S3:
             return
 
         package_path = self._download_file(temp_dir=temp_dir, url=repo_object.url)
-
-        if package_path.endswith(".rpm"):
-            subprocess.check_call(
-                f"rpm --checksig {package_path}".split(),
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-            )
-
         self._put_object(package_path, repo_object.destination)
         try:
             os.unlink(package_path)
