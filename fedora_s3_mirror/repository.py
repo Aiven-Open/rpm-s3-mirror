@@ -75,6 +75,7 @@ class Package:
         version_data = package_element.find("common:version", namespaces=namespaces)
         self.version = version_data.get("ver")
         self.epoch = version_data.get("epoch")
+        self.release = version_data.get("rel")
         self.package_size = int(package_element.find("common:size", namespaces=namespaces).get("package"))
         self.release = version_data.get("rel")
 
@@ -85,13 +86,20 @@ class Package:
     def __eq__(self, other) -> bool:
         if not isinstance(other, Package):
             return False
-        return repr(self) == repr(other)
+        return self._key() == other._key()
 
     def __repr__(self) -> str:
-        return f"Package(name='{self.name}', version='{self.version}', epoch='{self.epoch}', checksum='{self.checksum}')"
+        return f"Package(name='{self.name}', \
+            version='{self.version}',\
+            epoch='{self.epoch}',\
+            release='{self.release}', \
+            checksum='{self.checksum}')"
+
+    def _key(self):
+        return self.name, self.version, self.epoch, self.release, self.checksum
 
     def __hash__(self) -> int:
-        return hash(self.__repr__())
+        return hash(self._key())
 
 
 class PackageList:
