@@ -4,19 +4,20 @@ import hashlib
 import logging
 import os
 import shutil
-import subprocess
 import threading
 from concurrent.futures.thread import ThreadPoolExecutor
 from datetime import datetime
-from os.path import join, basename
+from os.path import join
 from tempfile import TemporaryDirectory
+from typing import Collection, Union, BinaryIO
 from urllib.parse import urlparse
 
 import boto3
 import botocore.exceptions
 import time
 
-from fedora_s3_mirror.util import get_requests_session
+from fedora_s3_mirror.repository import RepodataSection, Package
+from fedora_s3_mirror.util import get_requests_session, validate_checksum
 
 lock = threading.RLock()
 
@@ -41,7 +42,13 @@ class S3:
         self.session = get_requests_session()
         self.log = logging.getLogger(type(self).__name__)
 
-    def sync_packages(self, base_url, upstream_repodata, upstream_packages, skip_existing=False):
+    def sync_packages(
+        self,
+        base_url: str,
+        upstream_repodata: RepodataSection,
+        upstream_packages: Collection[Package],
+        skip_existing: bool = False,
+    ):
         with TemporaryDirectory(prefix=self.scratch_dir) as temp_dir:
             self._sync_objects(temp_dir, upstream_packages, skip_existing=skip_existing)
             self._sync_objects(temp_dir=temp_dir, repo_objects=upstream_repodata.values(), skip_existing=skip_existing)
@@ -51,12 +58,12 @@ class S3:
             path = urlparse(url).path
             self._put_object(repomd_xml, path, cache_age=0)
 
-    def repomd_update_time(self, base_url) -> datetime:
+    def repomd_update_time(self, base_url: str) -> datetime:
         url = f"{base_url}repodata/repomd.xml"
         response = self._head_object(key=self._trim_key(remote_path=urlparse(url).path))
         return response["LastModified"]
 
-    def _sync_objects(self, temp_dir, repo_objects, skip_existing):
+    def _sync_objects(self, temp_dir: str, repo_objects: Collection[Package], skip_existing: bool):
         sync = functools.partial(self._sync_object, temp_dir, skip_existing)
         start = time.time()
         self.log.info(f"Beginning sync of {len(repo_objects)} objects.")
@@ -67,19 +74,20 @@ class S3:
         elapsed = int(time.time() - start)
         self.log.info(f"Completed syncing {len(repo_objects)} objects in {elapsed} seconds")
 
-    def _sync_object(self, temp_dir, skip_existing, repo_object):
+    def _sync_object(self, temp_dir: str, skip_existing: bool, repo_object: Union[Package, RepodataSection]):
         if skip_existing and self._object_exists(repo_object.destination):
             self.log.debug("SKIP: %s", repo_object.destination)
             return
 
         package_path = self._download_file(temp_dir=temp_dir, url=repo_object.url)
+        validate_checksum(package_path, checksum_type=repo_object.checksum_type, checksum=repo_object.checksum)
         self._put_object(package_path, repo_object.destination)
         try:
             os.unlink(package_path)
         except Exception as e:
             self.log.debug("Failed to unlink %s: %s", package_path, e)
 
-    def _download_file(self, temp_dir, url) -> str:
+    def _download_file(self, temp_dir: str, url: str) -> str:
         self.log.debug("GET: %s", url)
         with self.session.get(url, stream=True) as request:
             request.raise_for_status()
@@ -88,7 +96,7 @@ class S3:
                 shutil.copyfileobj(request.raw, f)
             return out_path
 
-    def _put_object(self, local_path, key, cache_age=31536000):
+    def _put_object(self, local_path: str, key: str, cache_age=31536000):
         with open(local_path, "rb") as package_fp:
             # We need to seek after this call so boto gets the file pointer at the beginning
             md5_header = self._build_md5_header(fp=package_fp)
@@ -109,7 +117,7 @@ class S3:
                 ContentMD5=md5_header
             )
 
-    def _object_exists(self, key) -> bool:
+    def _object_exists(self, key: str) -> bool:
         try:
             self._head_object(key=self._trim_key(key))
             return True
@@ -118,14 +126,14 @@ class S3:
                 raise
         return False
 
-    def _head_object(self, key):
+    def _head_object(self, key: str):
         self.log.debug("HEAD: %s", key)
         return self._client.head_object(
             Bucket=self.bucket_name,
             Key=key,
         )
 
-    def _trim_key(self, remote_path) -> str:
+    def _trim_key(self, remote_path: str) -> str:
         # Strip the leading / if present otherwise we end up
         # with an extra root directory in s3 which we don't want.
         if remote_path.startswith("/"):
@@ -145,7 +153,7 @@ class S3:
                 )
         return self._s3
 
-    def _build_md5_header(self, fp) -> str:
+    def _build_md5_header(self, fp: BinaryIO) -> str:
         """
         ContentMD5 (string) -- The base64-encoded 128-bit MD5 digest of the message (without the headers)
         according to RFC 1864. This header can be used as a message integrity check to verify that the data is the same

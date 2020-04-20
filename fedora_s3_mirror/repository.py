@@ -16,17 +16,13 @@ import gzip
 
 from requests import Response
 
-from fedora_s3_mirror.util import get_requests_session
+from fedora_s3_mirror.util import get_requests_session, validate_checksum
 
 namespaces = {
     "common": "http://linux.duke.edu/metadata/common",
     "repo": "http://linux.duke.edu/metadata/repo",
     "rpm": "http://linux.duke.edu/metadata/rpm"
 }
-
-
-class InvalidChecksumError(Exception):
-    pass
 
 
 def safe_parse_xml(xml_string: bytes) -> Element:
@@ -42,20 +38,12 @@ def download_repodata_section(section, request, destination_dir) -> str:
     return local_path
 
 
-def validate_checksum(path, checksum_type, checksum) -> None:
-    if checksum_type != "sha256":
-        raise ValueError("Only sha256 checksums are currently supported")
-    with open(path, "rb") as f:
-        local_checksum = hashlib.sha256(f.read()).hexdigest()
-        if checksum != local_checksum:
-            raise InvalidChecksumError(f"{path}: expected {checksum} found {local_checksum}")
-
-
 class Package:
     __slots__ = [
         "base_url",
         "name",
         "checksum",
+        "checksum_type",
         "location",
         "destination",
         "version",
@@ -69,7 +57,9 @@ class Package:
             destination_path += "/"
         self.base_url = base_url
         self.name = package_element.findtext("common:name", namespaces=namespaces)
-        self.checksum = package_element.findtext("common:checksum", namespaces=namespaces)
+        checksum_data = package_element.find("common:checksum", namespaces=namespaces)
+        self.checksum = checksum_data.text
+        self.checksum_type = checksum_data.get("type")
         self.location = package_element.find("common:location", namespaces=namespaces).get("href")
         self.destination = f"{destination_path}{self.location}"
         version_data = package_element.find("common:version", namespaces=namespaces)
