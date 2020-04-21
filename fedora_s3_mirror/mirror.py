@@ -68,31 +68,32 @@ class YUMMirror:
                     skip_existing=self.config.bootstrap
                 )
 
+                # If we are not bootstrapping, store a manifest that describes the changes synced in this run
                 if not self.config.bootstrap:
-                    # Store the previous repomd.xml file so if we have any issues we can easily restore it.
-                    repomd_archive_location = self.s3.overwrite_repomd(
+                    archive_location = self.s3.archive_repomd(
                         update_time=update_time,
                         base_url=upstream_repository.base_url,
                         manifest_location=MANIFEST_LOCATION,
                     )
-
-                    # Store a manifest that describes the changes synced in this run
                     manifest = Manifest(
                         update_time=update_time,
                         upstream_repository=upstream_repository.base_url,
-                        previous_repomd=repomd_archive_location,
+                        previous_repomd=archive_location,
                         synced_packages=[package.to_dict() for package in new_packages],
                     )
                     self.s3.put_manifest(manifest_location=MANIFEST_LOCATION, manifest=manifest)
 
+                # Finally, overwrite the repomd.xml file to make our changes live
+                self.s3.overwrite_repomd(base_url=upstream_repository.base_url)
+
             self.log.info("Updated mirror with %s packages", len(new_packages))
-            self.stats.gauge(
+            self.stats.timing(
                 metric="s3_mirror_sync_seconds",
                 value=time.monotonic() - mirror_start,
                 tags={"repo": upstream_metadata.base_url},
             )
 
-        self.stats.gauge(metric="s3_mirror_sync_seconds_total", value=time.monotonic() - start)
+        self.stats.timing(metric="s3_mirror_sync_seconds_total", value=time.monotonic() - start)
 
     def _build_s3_url(self, upstream_repository) -> str:
         dest_path = urlparse(upstream_repository.base_url).path

@@ -10,7 +10,7 @@ from concurrent.futures.thread import ThreadPoolExecutor
 from datetime import datetime
 from os.path import join
 from tempfile import TemporaryDirectory, NamedTemporaryFile
-from typing import Collection, Union, BinaryIO
+from typing import Collection, Union, BinaryIO, Dict, Iterable
 from urllib.parse import urlparse
 
 import boto3
@@ -53,7 +53,7 @@ class S3:
     def sync_packages(
         self,
         base_url: str,
-        upstream_repodata: RepodataSection,
+        upstream_repodata: Dict[str, RepodataSection],
         upstream_packages: Collection[Package],
         skip_existing: bool = False,
     ):
@@ -61,26 +61,28 @@ class S3:
             self._sync_objects(temp_dir, upstream_packages, skip_existing=skip_existing)
             synced_bytes = sum((package.package_size for package in upstream_packages))
             self.stats.gauge(metric="s3_mirror_sync_bytes", value=synced_bytes, tags={"repo": base_url})
-            self.stats.gauge(
-                metric="s3_mirror_sync_packages", value=len(upstream_packages), tags={"repo": base_url}
-            )
+            self.stats.gauge(metric="s3_mirror_sync_packages", value=len(upstream_packages), tags={"repo": base_url})
             self._sync_objects(temp_dir=temp_dir, repo_objects=upstream_repodata.values(), skip_existing=skip_existing)
 
-    def overwrite_repomd(self, update_time, base_url, manifest_location):
-        self.log.info("Overwriting repomd.xml")
+    def overwrite_repomd(self, base_url):
         with TemporaryDirectory(prefix=self.scratch_dir) as temp_dir:
             url = f"{base_url}repodata/repomd.xml"
             repomd_xml = self._download_file(temp_dir, url)
             path = urlparse(url).path
-            archive_location = self.sync_identifier(
-                base_url=base_url,
-                manifest_location=manifest_location,
-                update_time=update_time,
-                filename="repomd.xml",
-            )
-            self._copy_object(path, archive_location)
+            self.log.info("Overwriting repomd.xml")
             self._put_object(repomd_xml, path, cache_age=0)
-            return archive_location
+
+    def archive_repomd(self, update_time, base_url, manifest_location):
+        url = f"{base_url}repodata/repomd.xml"
+        archive_location = self.sync_identifier(
+            base_url=base_url,
+            manifest_location=manifest_location,
+            update_time=update_time,
+            filename="repomd.xml",
+        )
+        self.log.debug("Archiving repomd.xml to %s", archive_location)
+        self._copy_object(source=urlparse(url).path, destination=archive_location)
+        return archive_location
 
     def sync_identifier(self, base_url, manifest_location, update_time, filename):
         repo_hash = md5_string(base_url)
@@ -106,7 +108,7 @@ class S3:
         response = self._head_object(key=self._trim_key(remote_path=urlparse(url).path))
         return response["LastModified"]
 
-    def _sync_objects(self, temp_dir: str, repo_objects: Collection[Package], skip_existing: bool):
+    def _sync_objects(self, temp_dir: str, repo_objects: Iterable[Package], skip_existing: bool):
         sync = functools.partial(self._sync_object, temp_dir, skip_existing)
         start = time.time()
         self.log.info(f"Beginning sync of {len(repo_objects)} objects.")
