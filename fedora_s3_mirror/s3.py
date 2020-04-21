@@ -18,6 +18,7 @@ import botocore.exceptions
 import time
 
 from fedora_s3_mirror.repository import RepodataSection, Package
+from fedora_s3_mirror.statsd import StatsClient
 from fedora_s3_mirror.util import get_requests_session, validate_checksum
 
 lock = threading.RLock()
@@ -30,17 +31,19 @@ def md5_string(string):
 class S3:
     def __init__(
         self,
-        aws_access_key_id,
-        aws_secret_access_key,
-        bucket_name,
-        bucket_region,
-        max_workers=8,
-        scratch_dir="/var/tmp/",
+        aws_access_key_id: str,
+        aws_secret_access_key: str,
+        bucket_name: str,
+        bucket_region: str,
+        stats: StatsClient,
+        max_workers: int = 8,
+        scratch_dir: str = "/var/tmp/",
     ):
         self.aws_access_key_id = aws_access_key_id
         self.aws_secret_access_key = aws_secret_access_key
         self.bucket_name = bucket_name
         self.bucket_region = bucket_region
+        self.stats = stats
         self.max_workers = max_workers
         self.scratch_dir = scratch_dir
         self._s3 = None
@@ -49,12 +52,18 @@ class S3:
 
     def sync_packages(
         self,
+        base_url: str,
         upstream_repodata: RepodataSection,
         upstream_packages: Collection[Package],
         skip_existing: bool = False,
     ):
         with TemporaryDirectory(prefix=self.scratch_dir) as temp_dir:
             self._sync_objects(temp_dir, upstream_packages, skip_existing=skip_existing)
+            synced_bytes = sum((package.package_size for package in upstream_packages))
+            self.stats.gauge(metric="s3_mirror_sync_bytes", value=synced_bytes, tags={"repo": base_url})
+            self.stats.gauge(
+                metric="s3_mirror_sync_packages", value=len(upstream_packages), tags={"repo": base_url}
+            )
             self._sync_objects(temp_dir=temp_dir, repo_objects=upstream_repodata.values(), skip_existing=skip_existing)
 
     def overwrite_repomd(self, update_time, base_url, manifest_location):

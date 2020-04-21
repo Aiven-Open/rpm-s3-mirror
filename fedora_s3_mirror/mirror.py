@@ -1,10 +1,12 @@
 import json
 import logging
+import time
 from collections import namedtuple
 from urllib.parse import urlparse
 
 from fedora_s3_mirror.repository import YUMRepository
 from fedora_s3_mirror.s3 import S3
+from fedora_s3_mirror.statsd import StatsClient
 from fedora_s3_mirror.util import get_requests_session, now
 
 Manifest = namedtuple("Manifest", ["update_time", "upstream_repository", "previous_repomd", "synced_packages"])
@@ -14,20 +16,24 @@ MANIFEST_LOCATION = "manifests"
 class YUMMirror:
     def __init__(self, config):
         self.config = config
+        self.session = get_requests_session()
+        self.log = logging.getLogger(type(self).__name__)
+        self.stats = StatsClient()
         self.s3 = S3(
             aws_secret_access_key=self.config.aws_secret_access_key,
             aws_access_key_id=self.config.aws_access_key_id,
             bucket_name=self.config.bucket_name,
             bucket_region=self.config.bucket_region,
+            stats=self.stats,
             max_workers=self.config.max_workers,
             scratch_dir=self.config.scratch_dir,
         )
         self.repositories = [YUMRepository(base_url=url) for url in config.upstream_repositories]
-        self.session = get_requests_session()
-        self.log = logging.getLogger(type(self).__name__)
 
     def sync(self):
+        start = time.monotonic()
         for upstream_repository in self.repositories:
+            mirror_start = time.monotonic()
             update_time = now()
             upstream_metadata = upstream_repository.parse_metadata()
 
@@ -51,6 +57,7 @@ class YUMMirror:
             # Sync our mirror with upstream.
             if new_packages:
                 self.s3.sync_packages(
+                    base_url=upstream_metadata.base_url,
                     upstream_repodata=upstream_metadata.repodata,
                     upstream_packages=new_packages,
                     # If we are bootstrapping the s3 repo, it is worth checking if the package already exists as if the
@@ -79,6 +86,13 @@ class YUMMirror:
                     self.s3.put_manifest(manifest_location=MANIFEST_LOCATION, manifest=manifest)
 
             self.log.info("Updated mirror with %s packages", len(new_packages))
+            self.stats.gauge(
+                metric="s3_mirror_sync_seconds",
+                value=time.monotonic() - mirror_start,
+                tags={"repo": upstream_metadata.base_url},
+            )
+
+        self.stats.gauge(metric="s3_mirror_sync_seconds_total", value=time.monotonic() - start)
 
     def _build_s3_url(self, upstream_repository) -> str:
         dest_path = urlparse(upstream_repository.base_url).path

@@ -7,7 +7,6 @@ from lxml.etree import fromstring, Element
 from lxml.etree import XMLParser
 from dateutil.parser import parse
 from tempfile import TemporaryDirectory
-import hashlib
 import os
 import shutil
 from os.path import join
