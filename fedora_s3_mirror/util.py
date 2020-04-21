@@ -1,3 +1,4 @@
+import datetime
 import hashlib
 
 import requests
@@ -25,3 +26,8 @@ def get_requests_session() -> Session:
     session.mount('http://', HTTPAdapter(max_retries=retries))
     session.mount('https://', HTTPAdapter(max_retries=retries))
     return session
+
+
+def now() -> datetime.datetime:
+    current_time = datetime.datetime.now(datetime.timezone.utc)
+    return current_time.replace(microsecond=0)

@@ -1,9 +1,14 @@
+import json
 import logging
+from collections import namedtuple
 from urllib.parse import urlparse
 
 from fedora_s3_mirror.repository import YUMRepository
 from fedora_s3_mirror.s3 import S3
-from fedora_s3_mirror.util import get_requests_session
+from fedora_s3_mirror.util import get_requests_session, now
+
+Manifest = namedtuple("Manifest", ["update_time", "upstream_repository", "previous_repomd", "synced_packages"])
+MANIFEST_LOCATION = "manifests"
 
 
 class YUMMirror:
@@ -23,6 +28,7 @@ class YUMMirror:
 
     def sync(self):
         for upstream_repository in self.repositories:
+            update_time = now()
             upstream_metadata = upstream_repository.parse_metadata()
 
             if self.config.bootstrap:
@@ -45,7 +51,6 @@ class YUMMirror:
             # Sync our mirror with upstream.
             if new_packages:
                 self.s3.sync_packages(
-                    base_url=upstream_repository.base_url,
                     upstream_repodata=upstream_metadata.repodata,
                     upstream_packages=new_packages,
                     # If we are bootstrapping the s3 repo, it is worth checking if the package already exists as if the
@@ -55,6 +60,24 @@ class YUMMirror:
                     # it is a bug of some kind).
                     skip_existing=self.config.bootstrap
                 )
+
+                if not self.config.bootstrap:
+                    # Store the previous repomd.xml file so if we have any issues we can easily restore it.
+                    repomd_archive_location = self.s3.overwrite_repomd(
+                        update_time=update_time,
+                        base_url=upstream_repository.base_url,
+                        manifest_location=MANIFEST_LOCATION,
+                    )
+
+                    # Store a manifest that describes the changes synced in this run
+                    manifest = Manifest(
+                        update_time=update_time,
+                        upstream_repository=upstream_repository.base_url,
+                        previous_repomd=repomd_archive_location,
+                        synced_packages=[package.to_dict() for package in new_packages],
+                    )
+                    self.s3.put_manifest(manifest_location=MANIFEST_LOCATION, manifest=manifest)
+
             self.log.info("Updated mirror with %s packages", len(new_packages))
 
     def _build_s3_url(self, upstream_repository) -> str:

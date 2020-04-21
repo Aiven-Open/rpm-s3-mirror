@@ -1,6 +1,7 @@
 import base64
 import functools
 import hashlib
+import json
 import logging
 import os
 import shutil
@@ -8,7 +9,7 @@ import threading
 from concurrent.futures.thread import ThreadPoolExecutor
 from datetime import datetime
 from os.path import join
-from tempfile import TemporaryDirectory
+from tempfile import TemporaryDirectory, NamedTemporaryFile
 from typing import Collection, Union, BinaryIO
 from urllib.parse import urlparse
 
@@ -20,6 +21,10 @@ from fedora_s3_mirror.repository import RepodataSection, Package
 from fedora_s3_mirror.util import get_requests_session, validate_checksum
 
 lock = threading.RLock()
+
+
+def md5_string(string):
+    return hashlib.md5(string.encode("utf-8")).hexdigest()
 
 
 class S3:
@@ -44,7 +49,6 @@ class S3:
 
     def sync_packages(
         self,
-        base_url: str,
         upstream_repodata: RepodataSection,
         upstream_packages: Collection[Package],
         skip_existing: bool = False,
@@ -52,11 +56,41 @@ class S3:
         with TemporaryDirectory(prefix=self.scratch_dir) as temp_dir:
             self._sync_objects(temp_dir, upstream_packages, skip_existing=skip_existing)
             self._sync_objects(temp_dir=temp_dir, repo_objects=upstream_repodata.values(), skip_existing=skip_existing)
-            self.log.info("Overwriting repomd.xml")
+
+    def overwrite_repomd(self, update_time, base_url, manifest_location):
+        self.log.info("Overwriting repomd.xml")
+        with TemporaryDirectory(prefix=self.scratch_dir) as temp_dir:
             url = f"{base_url}repodata/repomd.xml"
             repomd_xml = self._download_file(temp_dir, url)
             path = urlparse(url).path
+            archive_location = self.sync_identifier(
+                base_url=base_url,
+                manifest_location=manifest_location,
+                update_time=update_time,
+                filename="repomd.xml",
+            )
+            self._copy_object(path, archive_location)
             self._put_object(repomd_xml, path, cache_age=0)
+            return archive_location
+
+    def sync_identifier(self, base_url, manifest_location, update_time, filename):
+        repo_hash = md5_string(base_url)
+        timestamp = update_time.strftime("%Y-%m-%d:%H:%M")
+        identifier = f"{manifest_location}/{repo_hash}-{timestamp}-{filename}"
+        return identifier
+
+    def put_manifest(self, manifest_location, manifest):
+        manifest_filename = self.sync_identifier(
+            base_url=manifest.upstream_repository,
+            manifest_location=manifest_location,
+            update_time=manifest.update_time,
+            filename="manifest.json",
+        )
+        manifest_json = json.dumps(manifest._asdict(), default=lambda x: x.isoformat(), indent=2)
+        with NamedTemporaryFile(prefix=self.scratch_dir) as f:
+            f.write(manifest_json.encode("utf-8"))
+            f.flush()
+            self._put_object(local_path=f.name, key=manifest_filename, cache_age=0)
 
     def repomd_update_time(self, base_url: str) -> datetime:
         url = f"{base_url}repodata/repomd.xml"
@@ -116,6 +150,18 @@ class S3:
                 Body=package_fp,
                 ContentMD5=md5_header
             )
+
+    def _copy_object(self, source, destination):
+        source, destination = self._trim_key(source), self._trim_key(destination)
+        self._client.copy_object(
+            Bucket=self.bucket_name,
+            CopySource={
+                "Bucket": self.bucket_name,
+                "Key": source,
+            },
+            Key=destination,
+            CacheControl="max-age=0"
+        )
 
     def _object_exists(self, key: str) -> bool:
         try:

@@ -50,6 +50,7 @@ class Package:
         "epoch",
         "package_size",
         "release",
+        "url",
     ]
 
     def __init__(self, base_url: str, destination_path: str, package_element: Element):
@@ -68,15 +69,18 @@ class Package:
         self.release = version_data.get("rel")
         self.package_size = int(package_element.find("common:size", namespaces=namespaces).get("package"))
         self.release = version_data.get("rel")
+        self.url = f"{self.base_url}{self.location}"
 
-    @property
-    def url(self) -> str:
-        return f"{self.base_url}{self.location}"
+    def to_dict(self):
+        return {key: getattr(self, key) for key in self.__slots__}
 
     def __eq__(self, other) -> bool:
         if not isinstance(other, Package):
             return False
         return self._key() == other._key()
+
+    def _key(self):
+        return self.name, self.version, self.epoch, self.release, self.checksum
 
     def __repr__(self) -> str:
         return f"Package(name='{self.name}', \
@@ -84,9 +88,6 @@ class Package:
             epoch='{self.epoch}',\
             release='{self.release}', \
             checksum='{self.checksum}')"
-
-    def _key(self):
-        return self.name, self.version, self.epoch, self.release, self.checksum
 
     def __hash__(self) -> int:
         return hash(self._key())
