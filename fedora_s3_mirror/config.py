@@ -58,8 +58,11 @@ class ENVConfig(Config):
         config_options = list(REQUIRED) + list(DEFAULTS)
         for key in sorted(config_options):
             value = os.environ.get(key.upper())
-            if not value and key in REQUIRED:
-                raise ConfigError(f"Missing required environment variable: {key.upper()}")
+            if not value:
+                if key not in DEFAULTS:
+                    raise ConfigError(f"Missing required environment variable: {key.upper()}")
+                else:
+                    continue
             elif key == "upstream_repositories":
                 value = value.split(",")
             elif key == "max_workers":
