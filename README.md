@@ -1,24 +1,29 @@
-# POC Fedora S3 mirror tool
+# Fedora S3 mirror
 
-This repo contains the initial POC implementation of a tool to create and periodically sync upstream Fedora repositories with s3.
+Tool to create a Fedora mirror in s3 and periodically sync changes.
 
-Q: why write a new tool and not use an existing one?
-A: I didn't see any tools to do the job. There are existing tools for mirroring Fedora repositories but the recommended one is written in elite bash and requires a persistent VM. I wanted ideally to have a tool with no persistent state to more easily fit into our existing infrastructure (makes everything much easier).
 
-Q: how does it work?
-A: the idea is to periodically parse the upstream repomd.xml files and diff it with what we have in our mirror. Any changes are then synced across to s3. We never delete anything.
+### Configuration
 
-Q: why is this in a new repo and not aiven core? 
-A: I thought this would be a nice self contained thing we could release as open source.
+The tool can be configured either with a config file or via environment variables. The following options are supported:
 
-Q: what about versioning/snapshotting like mentioned in https://app.clubhouse.io/aiven/story/12173/private-mirror-for-fedora-repositories#activity-12352
-A: snapshotting should be possible using the "metalink" feature and a lambda function/api endpoint. Can add later.
+*aws_access_key_id* - AWS access key id 
+*aws_secret_access_key* - AWS access key
+*bucket_name* - name of the bucket to sync to
+*bucket_region* - region bucket is in
+*max_workers* - number of worker threads to use during sync
+*upstream_repositories* - list of upstream repositories to sync
+*scratch_dir* - where to cache files during sync (defaults to /var/tmp)
 
-Q: what is the resource usage like?
-A: on initial sync it can chew a fair bit of network/CPU/memory. This can be throttled somewhat by using less workers.
- 
-Q: how do I run this thing?
-A: you can run it as follows:
+### Manifest
+
+On a successful sync, changed packages and some additional metadata are put in the `manifests` directory. Additionally, the previous repomd.xml file is also stored there.
+
+### Metrics
+
+The tool emits some simple metrics in the statsd format (https://github.com/influxdata/telegraf/tree/master/plugins/inputs/statsd)
+
+### Example
 
 ```
 python3 -m fedora_s3_mirror --config config.json
@@ -36,11 +41,3 @@ where config.json is something like:
   ]
 }
 ```
-
-
-
-# TODO:
-
-* refuse to sync from mirrors that are not using TLS
-* remove the util.py file as it is not needed (the code in there is not shared)
-* validate the checksums of the various metadata files
