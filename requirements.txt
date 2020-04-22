@@ -1,0 +1,5 @@
+defusedxml
+requests
+python-dateutil
+boto3
+lxml
