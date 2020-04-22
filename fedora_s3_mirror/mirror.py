@@ -87,13 +87,14 @@ class YUMMirror:
                 self.s3.overwrite_repomd(base_url=upstream_repository.base_url)
 
             self.log.info("Updated mirror with %s packages", len(new_packages))
-            self.stats.timing(
+            self.stats.gauge(
                 metric="s3_mirror_sync_seconds",
                 value=time.monotonic() - mirror_start,
                 tags={"repo": upstream_metadata.base_url},
             )
 
-        self.stats.timing(metric="s3_mirror_sync_seconds_total", value=time.monotonic() - start)
+        self.log.info("Synced %s repos in %s seconds", len(self.repositories), time.monotonic() - start)
+        self.stats.gauge(metric="s3_mirror_sync_seconds_total", value=time.monotonic() - start)
 
     def _build_s3_url(self, upstream_repository) -> str:
         dest_path = urlparse(upstream_repository.base_url).path

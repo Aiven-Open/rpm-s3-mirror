@@ -33,6 +33,9 @@ class Config:
     bootstrap = None
     _config = DEFAULTS
 
+    def __init__(self):
+        self.load()
+
     def load(self):
         self._config.update(DEFAULTS)
         self._populate_required()
@@ -55,11 +58,8 @@ class ENVConfig(Config):
         config_options = list(REQUIRED) + list(DEFAULTS)
         for key in sorted(config_options):
             value = os.environ.get(key.upper())
-            if not value:
-                if key not in DEFAULTS:
-                    raise ConfigError(f"Missing required environment variable: {key.upper()}")
-                else:
-                    continue
+            if not value and key in REQUIRED:
+                raise ConfigError(f"Missing required environment variable: {key.upper()}")
             elif key == "upstream_repositories":
                 value = value.split(",")
             elif key == "max_workers":
@@ -72,6 +72,7 @@ class ENVConfig(Config):
 class JSONConfig(Config):
     def __init__(self, path):
         self.path = path
+        super().__init__()
 
     def _populate_required(self):
         with open(self.path) as f:
