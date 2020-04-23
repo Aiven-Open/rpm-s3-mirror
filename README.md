@@ -9,11 +9,17 @@ This tool is currently in alpha.
 The tool can be configured either with a config file or via environment variables. The following options are supported:
 
 *aws_access_key_id* - AWS access key id 
+
 *aws_secret_access_key* - AWS access key
+
 *bucket_name* - name of the bucket to sync to
+
 *bucket_region* - region bucket is in
+
 *max_workers* - number of worker threads to use during sync
+
 *upstream_repositories* - list of upstream repositories to sync
+
 *scratch_dir* - where to cache files during sync (defaults to /var/tmp)
 
 ### Manifest
