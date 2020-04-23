@@ -2,6 +2,7 @@
 
 Tool to create a Fedora mirror in s3 and periodically sync changes.
 
+This tool is currently in alpha.
 
 ### Configuration
 
