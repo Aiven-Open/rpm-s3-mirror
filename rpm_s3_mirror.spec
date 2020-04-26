@@ -1,11 +1,11 @@
-Name:           fedora_s3_mirror
+Name:           rpm_s3_mirror
 Version:        %{major_version}
 Release:        %{minor_version}%{?dist}
-Url:            http://github.com/aiven/fedora_s3_mirror
-Summary:        Fedora S3 mirror tool
+Url:            http://github.com/aiven/rpm-s3-mirror
+Summary:        Aiven RPM S3 mirror tool
 BuildArch:      noarch
 License:        ASL 2.0
-Source0:        fedora_s3_mirror-rpm-src.tar
+Source0:        rpm_s3_mirror-rpm-src.tar
 BuildRequires:  python3-pytest
 BuildRequires:  python3-yapf
 BuildRequires:  rpm-build
@@ -19,14 +19,14 @@ Requires:       systemd
 %undefine _missing_build_ids_terminate_build
 
 %description
-fedora_s3_mirror is a tool for syncing upstream Fedora repositories with S3
+rpm_s3_mirror is a tool to create a RPM mirror in s3 and periodically sync changes
 
 
 %global debug_package %{nil}
 
 
 %prep
-%setup -q -n fedora_s3_mirror
+%setup -q -n rpm_s3_mirror
 
 
 %build
@@ -35,7 +35,7 @@ fedora_s3_mirror is a tool for syncing upstream Fedora repositories with S3
 %install
 python3 setup.py install --prefix=%{_prefix} --root=%{buildroot}
 sed -e "s@#!/bin/python@#!%{_bindir}/python@" -i %{buildroot}%{_bindir}/*
-%{__install} -Dm0644 fedora_s3_mirror.unit %{buildroot}%{_unitdir}/fedora_s3_mirror.service
+%{__install} -Dm0644 rpm_s3_mirror.unit %{buildroot}%{_unitdir}/rpm_s3_mirror.service
 
 
 %check
@@ -43,9 +43,9 @@ sed -e "s@#!/bin/python@#!%{_bindir}/python@" -i %{buildroot}%{_bindir}/*
 
 %files
 %defattr(-,root,root,-)
-%doc LICENSE README.md fedora_s3_mirror.json
-%{_bindir}/fedora_s3_mirror*
-%{_unitdir}/fedora_s3_mirror.service
+%doc LICENSE README.md rpm_s3_mirror.json
+%{_bindir}/rpm_s3_mirror*
+%{_unitdir}/rpm_s3_mirror.service
 %{python3_sitelib}/*
 
 

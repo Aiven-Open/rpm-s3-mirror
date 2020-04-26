@@ -1,0 +1,12 @@
+[Unit]
+Description=RPM S3 mirror tool
+
+[Service]
+User=nobody
+Group=nobody
+Type=notify
+Restart=no
+ExecStart=/usr/bin/rpm_s3_mirror --config /var/lib/rpm_s3_mirror/rpm_s3_mirror.json
+
+[Install]
+WantedBy=multi-user.target

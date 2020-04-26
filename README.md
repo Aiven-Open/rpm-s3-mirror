@@ -1,6 +1,6 @@
-# Fedora S3 mirror
+# RPM S3 mirror
 
-Tool to create a Fedora mirror in s3 and periodically sync changes.
+Tool to create a RPM mirror in s3 and periodically sync changes.
 
 This tool is currently in alpha.
 
@@ -33,7 +33,7 @@ The tool emits some simple metrics in the statsd format (https://github.com/infl
 ### Example
 
 ```
-python3 -m fedora_s3_mirror --config config.json
+python3 -m rpm_s3_mirror --config config.json
 ```
 
 where config.json is something like:

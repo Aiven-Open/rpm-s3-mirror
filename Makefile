@@ -1,25 +1,25 @@
 short_ver = 0.0.1
 long_ver = $(shell git describe --long 2>/dev/null || echo $(short_ver)-0-unknown-g`git describe --always`)
-generated = fedora_s3_mirror/version.py
+generated = rpm_s3_mirror/version.py
 
 all: $(generated)
 
 PYTHON ?= python3
-PYTHON_SOURCE_DIRS = fedora_s3_mirror/ test/
+PYTHON_SOURCE_DIRS = rpm_s3_mirror/ test/
 PYTEST_ARG ?= -v
 
 clean:
 	$(RM) -r *.egg-info/ build/ dist/ rpm/
-	$(RM) ../fedora_s3_mirror_* test-*.xml $(generated)
+	$(RM) ../rpm_s3_mirror_* test-*.xml $(generated)
 
 rpm:
-	git archive --output=fedora_s3_mirror-rpm-src.tar --prefix=fedora_s3_mirror/ HEAD
-	rpmbuild -bb fedora_s3_mirror.spec \
+	git archive --output=rpm_s3_mirror-rpm-src.tar --prefix=rpm_s3_mirror/ HEAD
+	rpmbuild -bb rpm_s3_mirror.spec \
 		--define '_topdir $(PWD)/rpm' \
 		--define '_sourcedir $(CURDIR)' \
 		--define 'major_version $(short_ver)' \
 		--define 'minor_version $(subst -,.,$(subst $(short_ver)-,,$(long_ver)))'
-	$(RM) fedora_s3_mirror-rpm-src.tar
+	$(RM) rpm_s3_mirror-rpm-src.tar
 
 build-dep-fed:
 	sudo dnf -y install --best --allowerasing \
@@ -36,7 +36,7 @@ unittest: $(generated)
 	$(PYTHON) -m pytest $(PYTEST_ARG) test/
 
 coverage: $(generated)
-	$(PYTHON) -m coverage run --source fedora_s3_mirror -m pytest $(PYTEST_ARG) test/
+	$(PYTHON) -m coverage run --source rpm_s3_mirror -m pytest $(PYTEST_ARG) test/
 	$(PYTHON) -m coverage report --show-missing
 
 pylint: $(generated)

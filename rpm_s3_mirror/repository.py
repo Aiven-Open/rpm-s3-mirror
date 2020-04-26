@@ -15,7 +15,7 @@ import gzip
 
 from requests import Response
 
-from fedora_s3_mirror.util import get_requests_session, validate_checksum
+from rpm_s3_mirror.util import get_requests_session, validate_checksum
 
 namespaces = {
     "common": "http://linux.duke.edu/metadata/common",
@@ -110,7 +110,7 @@ Metadata = namedtuple("Metadata", ["package_list", "repodata", "base_url"])
 RepodataSection = namedtuple("RepodataSection", ["url", "location", "destination", "checksum_type", "checksum"])
 
 
-class YUMRepository:
+class RPMRepository:
     def __init__(self, base_url: str):
         if not base_url.startswith("https://"):
             raise ValueError("Only https upstream repositories can be synced from")

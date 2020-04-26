@@ -1,8 +1,8 @@
 import argparse
 import logging
 
-from fedora_s3_mirror.config import Config, JSONConfig, ENVConfig
-from fedora_s3_mirror.mirror import YUMMirror
+from rpm_s3_mirror.config import JSONConfig, ENVConfig
+from rpm_s3_mirror.mirror import Mirror
 
 logging.getLogger('boto').setLevel(logging.WARNING)
 logging.getLogger('botocore').setLevel(logging.WARNING)
@@ -21,7 +21,7 @@ def main():
     elif args.env:
         config = ENVConfig()
 
-    mirror = YUMMirror(config=config)
+    mirror = Mirror(config=config)
     mirror.sync()
 
 

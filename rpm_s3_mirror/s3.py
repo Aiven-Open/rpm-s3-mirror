@@ -17,9 +17,9 @@ import boto3
 import botocore.exceptions
 import time
 
-from fedora_s3_mirror.repository import RepodataSection, Package
-from fedora_s3_mirror.statsd import StatsClient
-from fedora_s3_mirror.util import get_requests_session, validate_checksum
+from rpm_s3_mirror.repository import RepodataSection, Package
+from rpm_s3_mirror.statsd import StatsClient
+from rpm_s3_mirror.util import get_requests_session, validate_checksum
 
 lock = threading.RLock()
 

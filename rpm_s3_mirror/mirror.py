@@ -1,19 +1,18 @@
-import json
 import logging
 import time
 from collections import namedtuple
 from urllib.parse import urlparse
 
-from fedora_s3_mirror.repository import YUMRepository
-from fedora_s3_mirror.s3 import S3
-from fedora_s3_mirror.statsd import StatsClient
-from fedora_s3_mirror.util import get_requests_session, now
+from rpm_s3_mirror.repository import RPMRepository
+from rpm_s3_mirror.s3 import S3
+from rpm_s3_mirror.statsd import StatsClient
+from rpm_s3_mirror.util import get_requests_session, now
 
 Manifest = namedtuple("Manifest", ["update_time", "upstream_repository", "previous_repomd", "synced_packages"])
 MANIFEST_LOCATION = "manifests"
 
 
-class YUMMirror:
+class Mirror:
     def __init__(self, config):
         self.config = config
         self.session = get_requests_session()
@@ -28,7 +27,7 @@ class YUMMirror:
             max_workers=self.config.max_workers,
             scratch_dir=self.config.scratch_dir,
         )
-        self.repositories = [YUMRepository(base_url=url) for url in config.upstream_repositories]
+        self.repositories = [RPMRepository(base_url=url) for url in config.upstream_repositories]
 
     def sync(self):
         start = time.monotonic()
@@ -44,7 +43,7 @@ class YUMMirror:
                 self.log.info("Syncing repository: %s", upstream_repository.base_url)
                 # If the upstream repomd.xml file was updated after the last time we updated our
                 # mirror repomd.xml file then there is probably some work to do.
-                mirror_repository = YUMRepository(base_url=self._build_s3_url(upstream_repository))
+                mirror_repository = RPMRepository(base_url=self._build_s3_url(upstream_repository))
                 last_check_time = self.s3.repomd_update_time(base_url=mirror_repository.base_url)
                 if not upstream_repository.has_updates(since=last_check_time):
                     self.log.info(f"Skipping repository with no updates since: {last_check_time}")

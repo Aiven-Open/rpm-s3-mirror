@@ -2,14 +2,14 @@ from setuptools import setup
 import setuptools
 
 setup(
-    name="fedora_s3_mirror",
+    name="rpm_s3_mirror",
     packages=setuptools.find_packages(),
     version="0.1",
-    description="Tool for syncing YUM repositories with S3",
+    description="Tool for syncing RPM repositories with S3",
     license="Apache 2.0",
     author="Aiven",
     author_email="willcoe@aiven.io",
-    url="https://github.com/aiven/fedora_s3_mirror",
+    url="https://github.com/aiven/rpm-s3-mirror",
     install_requires=[
         "defusedxml",
         "requests",
@@ -19,7 +19,7 @@ setup(
     ],
     entry_points={
         "console_scripts": [
-            "fedora_s3_mirror = fedora_s3_mirror.__main__:main",
+            "rpm_s3_mirror = rpm_s3_mirror.__main__:main",
         ],
     },
     classifiers=[
