@@ -29,8 +29,13 @@ build-dep-fed:
 		python3-boto3 \
 		python3-lxml
 
-test:
-# TODO: add tests
+test: copyright
+
+.PHONY: copyright
+copyright:
+	$(eval MISSING_COPYRIGHT := $(shell git ls-files "*.py" | xargs grep -EL "Copyright \(c\) 20.* Aiven|Aiven license OK"))
+	@if [ "$(MISSING_COPYRIGHT)" != "" ]; then echo Missing Copyright statement in files: $(MISSING_COPYRIGHT) ; false; fi
+
 
 unittest: $(generated)
 	$(PYTHON) -m pytest $(PYTEST_ARG) test/

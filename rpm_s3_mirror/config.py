@@ -1,3 +1,5 @@
+# Copyright (c) 2020 Aiven, Helsinki, Finland. https://aiven.io/
+
 import json
 import os
 from abc import abstractmethod

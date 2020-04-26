@@ -1,3 +1,5 @@
+# Copyright (c) 2020 Aiven, Helsinki, Finland. https://aiven.io/
+
 import base64
 import functools
 import hashlib
