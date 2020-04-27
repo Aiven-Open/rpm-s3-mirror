@@ -5,8 +5,8 @@ from datetime import datetime
 from typing import Iterator, Dict
 from urllib.parse import urlparse
 
-from lxml.etree import fromstring, Element
-from lxml.etree import XMLParser
+from lxml.etree import fromstring, Element  # pylint: disable=no-name-in-module
+from lxml.etree import XMLParser  # pylint: disable=no-name-in-module
 from dateutil.parser import parse
 from tempfile import TemporaryDirectory
 import os
@@ -33,7 +33,7 @@ def safe_parse_xml(xml_string: bytes) -> Element:
 
 def download_repodata_section(section, request, destination_dir) -> str:
     local_path = join(destination_dir, os.path.basename(section.location))
-    with open(local_path, 'wb') as out:
+    with open(local_path, "wb") as out:
         shutil.copyfileobj(request.raw, out)
     validate_checksum(path=local_path, checksum_type=section.checksum_type, checksum=section.checksum)
     return local_path
@@ -101,7 +101,7 @@ class PackageList:
         self.root = safe_parse_xml(packages_xml)
 
     def __len__(self) -> int:
-        return int(self.root.get('packages'))
+        return int(self.root.get("packages"))
 
     def __iter__(self) -> Iterator[Package]:
         for package_element in self.root:
@@ -145,12 +145,12 @@ class RPMRepository:
 
     def parse_repomd(self, xml: Element) -> Dict[str, RepodataSection]:
         sections = {}
-        for data_element in xml.findall(f'repo:data', namespaces=namespaces):
+        for data_element in xml.findall(f"repo:data", namespaces=namespaces):
             section_type = data_element.attrib["type"]
             section = {}
-            for element in xml.findall(f'repo:data[@type="{section_type}"]/repo:*', namespaces=namespaces):
+            for element in xml.findall(f"repo:data[@type='{section_type}']/repo:*", namespaces=namespaces):
                 # Strip the namespace from the tag as it is annoying
-                _, _, key = element.tag.partition('}')
+                _, _, key = element.tag.partition("}")
                 value = element.text
                 if key == "location":
                     value = element.get("href")

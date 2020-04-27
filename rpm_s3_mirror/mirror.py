@@ -48,7 +48,7 @@ class Mirror:
                 mirror_repository = RPMRepository(base_url=self._build_s3_url(upstream_repository))
                 last_check_time = self.s3.repomd_update_time(base_url=mirror_repository.base_url)
                 if not upstream_repository.has_updates(since=last_check_time):
-                    self.log.info(f"Skipping repository with no updates since: {last_check_time}")
+                    self.log.info("Skipping repository with no updates since: %s", last_check_time)
                     continue
 
                 # Extract our metadata and detect any new/updated packages.

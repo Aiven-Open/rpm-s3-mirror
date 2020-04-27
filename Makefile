@@ -1,7 +1,7 @@
 short_ver = 0.0.1
 long_ver = $(shell git describe --long 2>/dev/null || echo $(short_ver)-0-unknown-g`git describe --always`)
 
-all:
+all: 
 
 PYTHON ?= python3
 PYTHON_SOURCE_DIRS = rpm_s3_mirror/ tests/
@@ -28,7 +28,7 @@ build-dep-fed:
 		python3-boto3 \
 		python3-lxml
 
-test: copyright unittest
+test: copyright pylint unittest
 
 .PHONY: copyright
 copyright:

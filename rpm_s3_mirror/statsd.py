@@ -18,12 +18,12 @@ class StatsClient:
         host="127.0.0.1",
         port=8125,
         tags=None,
-        format="telegraf",
+        metric_format="telegraf",
     ):
         self._dest_addr = (host, port)
         self._socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self._tags = tags or {}
-        self._message_format = format
+        self._message_format = metric_format
 
     def gauge(self, metric, value, tags=None):
         self._send(metric, b"g", value, tags)

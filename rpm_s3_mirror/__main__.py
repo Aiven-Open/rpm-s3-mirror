@@ -6,9 +6,9 @@ import logging
 from rpm_s3_mirror.config import JSONConfig, ENVConfig
 from rpm_s3_mirror.mirror import Mirror
 
-logging.getLogger('boto').setLevel(logging.WARNING)
-logging.getLogger('botocore').setLevel(logging.WARNING)
-logging.getLogger('urllib3').setLevel(logging.WARNING)
+logging.getLogger("boto").setLevel(logging.WARNING)
+logging.getLogger("botocore").setLevel(logging.WARNING)
+logging.getLogger("urllib3").setLevel(logging.WARNING)
 logging.basicConfig(level=logging.DEBUG)
 
 

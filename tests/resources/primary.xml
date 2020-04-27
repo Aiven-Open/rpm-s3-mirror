@@ -1,0 +1,931 @@
+<metadata xmlns="http://linux.duke.edu/metadata/common" xmlns:rpm="http://linux.duke.edu/metadata/rpm" packages="20">
+<package type="rpm">
+  <name>GMT</name>
+  <arch>i686</arch>
+  <version epoch="0" ver="6.0.0" rel="1.fc31"/>
+  <checksum type="sha256" pkgid="YES">e0445c5a0b1241058376f0dac30baceb07fbd2765e2fc0706d87121f788bf4b8</checksum>
+  <summary>Generic Mapping Tools</summary>
+  <description>GMT is an open source collection of ~60 tools for manipulating geographic and
+Cartesian data sets (including filtering, trend fitting, gridding, projecting,
+etc.) and producing Encapsulated PostScript File (EPS) illustrations ranging
+from simple x-y plots via contour maps to artificially illuminated surfaces
+and 3-D perspective views.  GMT supports ~30 map projections and transforma-
+tions and comes with support data such as coastlines, rivers, and political
+boundaries.
+
+GMT is developed and maintained by Paul Wessel and Walter H. F.  Smith with
+help from a global set of volunteers, and is supported by the National
+Science Foundation.
+
+NOTE: Specific executables that conflict with other Fedora packages have been
+removed.  These functions can still be accessed via the GMT wrapper script
+with: GMT &lt;function&gt; [args]</description>
+  <packager>Fedora Project</packager>
+  <url>https://www.generic-mapping-tools.org/</url>
+  <time file="1572726924" build="1572708001"/>
+  <size package="2500708" installed="6799790" archive="6804408"/>
+  <location href="Packages/g/GMT-6.0.0-1.fc31.i686.rpm"/>
+  <format>
+    <rpm:license>LGPLv3+</rpm:license>
+    <rpm:vendor>Fedora Project</rpm:vendor>
+    <rpm:group>Unspecified</rpm:group>
+    <rpm:buildhost>buildvm-03.phx2.fedoraproject.org</rpm:buildhost>
+    <rpm:sourcerpm>GMT-6.0.0-1.fc31.src.rpm</rpm:sourcerpm>
+    <rpm:header-range start="4504" end="14660"/>
+    <rpm:provides>
+      <rpm:entry name="GMT" flags="EQ" epoch="0" ver="6.0.0" rel="1.fc31"/>
+      <rpm:entry name="GMT(x86-32)" flags="EQ" epoch="0" ver="6.0.0" rel="1.fc31"/>
+      <rpm:entry name="gmt" flags="EQ" epoch="0" ver="6.0.0" rel="1.fc31"/>
+      <rpm:entry name="libgmt.so.6"/>
+      <rpm:entry name="libpostscriptlight.so.6"/>
+    </rpm:provides>
+    <rpm:requires>
+      <rpm:entry name="/usr/bin/bash"/>
+      <rpm:entry name="GMT-common" flags="EQ" epoch="0" ver="6.0.0" rel="1.fc31"/>
+      <rpm:entry name="GraphicsMagick"/>
+      <rpm:entry name="dcw-gmt"/>
+      <rpm:entry name="gdal"/>
+      <rpm:entry name="gshhg-gmt-nc4"/>
+      <rpm:entry name="less"/>
+      <rpm:entry name="libcurl.so.4"/>
+      <rpm:entry name="libdl.so.2"/>
+      <rpm:entry name="libdl.so.2(GLIBC_2.0)"/>
+      <rpm:entry name="libdl.so.2(GLIBC_2.1)"/>
+      <rpm:entry name="libfftw3f.so.3"/>
+      <rpm:entry name="libfftw3f_threads.so.3"/>
+      <rpm:entry name="libgcc_s.so.1"/>
+      <rpm:entry name="libgcc_s.so.1(GCC_3.3.1)"/>
+      <rpm:entry name="libgdal.so.20"/>
+      <rpm:entry name="libglib-2.0.so.0"/>
+      <rpm:entry name="libgomp.so.1"/>
+      <rpm:entry name="libgomp.so.1(GOMP_4.0)"/>
+      <rpm:entry name="libgomp.so.1(OMP_1.0)"/>
+      <rpm:entry name="libm.so.6"/>
+      <rpm:entry name="libm.so.6(GLIBC_2.0)"/>
+      <rpm:entry name="libm.so.6(GLIBC_2.1)"/>
+      <rpm:entry name="libm.so.6(GLIBC_2.27)"/>
+      <rpm:entry name="libm.so.6(GLIBC_2.29)"/>
+      <rpm:entry name="libnetcdf.so.15"/>
+      <rpm:entry name="libopenblas.so.0"/>
+      <rpm:entry name="libpcre.so.1"/>
+      <rpm:entry name="libpthread.so.0"/>
+      <rpm:entry name="libpthread.so.0(GLIBC_2.0)"/>
+      <rpm:entry name="libz.so.1"/>
+      <rpm:entry name="rtld(GNU_HASH)"/>
+      <rpm:entry name="xdg-utils"/>
+      <rpm:entry name="libc.so.6(GLIBC_2.28)"/>
+    </rpm:requires>
+    <rpm:obsoletes>
+      <rpm:entry name="GMT-octave" flags="LE" epoch="0" ver="4.5.11"/>
+    </rpm:obsoletes>
+    <file>/usr/bin/gmt</file>
+    <file>/usr/bin/gmt-config</file>
+    <file>/usr/bin/gmt_shell_functions.sh</file>
+    <file>/usr/bin/gmtswitch</file>
+    <file>/usr/bin/isogmt</file>
+  </format>
+</package>
+<package type="rpm">
+  <name>GMT-doc</name>
+  <arch>noarch</arch>
+  <version epoch="0" ver="6.0.0" rel="1.fc31"/>
+  <checksum type="sha256" pkgid="YES">4c0139b19b457bff1f0307ad682fa8908e476569115ed8cced5ece7d27aeca1b</checksum>
+  <summary>Documentation for GMT</summary>
+  <description>The GMT-doc package provides the documentation for the GMT (Generic
+Mapping Tools) package.</description>
+  <packager>Fedora Project</packager>
+  <url>https://www.generic-mapping-tools.org/</url>
+  <time file="1572726923" build="1572708176"/>
+  <size package="39246322" installed="55903931" archive="56141492"/>
+  <location href="Packages/g/GMT-doc-6.0.0-1.fc31.noarch.rpm"/>
+  <format>
+    <rpm:license>LGPLv3+</rpm:license>
+    <rpm:vendor>Fedora Project</rpm:vendor>
+    <rpm:group>Unspecified</rpm:group>
+    <rpm:buildhost>buildvm-armv7-16.arm.fedoraproject.org</rpm:buildhost>
+    <rpm:sourcerpm>GMT-6.0.0-1.fc31.src.rpm</rpm:sourcerpm>
+    <rpm:header-range start="4504" end="207312"/>
+    <rpm:provides>
+      <rpm:entry name="GMT-doc" flags="EQ" epoch="0" ver="6.0.0" rel="1.fc31"/>
+      <rpm:entry name="GMT-examples" flags="EQ" epoch="0" ver="6.0.0" rel="1.fc31"/>
+      <rpm:entry name="gmt-doc" flags="EQ" epoch="0" ver="6.0.0" rel="1.fc31"/>
+    </rpm:provides>
+    <rpm:requires>
+      <rpm:entry name="GMT" flags="EQ" epoch="0" ver="6.0.0" rel="1.fc31"/>
+    </rpm:requires>
+    <rpm:obsoletes>
+      <rpm:entry name="GMT-examples" flags="LT" epoch="0" ver="6.0.0" rel="1.fc31"/>
+    </rpm:obsoletes>
+  </format>
+</package>
+<package type="rpm">
+  <name>GraphicsMagick-c++</name>
+  <arch>i686</arch>
+  <version epoch="0" ver="1.3.34" rel="1.fc31"/>
+  <checksum type="sha256" pkgid="YES">784424a83f98769749aede05e2f7bda122cb5600b3443cfceb9f1d83b17ae12c</checksum>
+  <summary>GraphicsMagick Magick++ library (C++ bindings)</summary>
+  <description>This package contains the GraphicsMagick++ library, a C++ binding to the
+GraphicsMagick graphics manipulation library.
+
+Install GraphicsMagick-c++ if you want to use any applications that use
+GraphicsMagick++.</description>
+  <packager>Fedora Project</packager>
+  <url>http://www.graphicsmagick.org/</url>
+  <time file="1577814299" build="1577744183"/>
+  <size package="149196" installed="502508" archive="503472"/>
+  <location href="Packages/g/GraphicsMagick-c++-1.3.34-1.fc31.i686.rpm"/>
+  <format>
+    <rpm:license>MIT</rpm:license>
+    <rpm:vendor>Fedora Project</rpm:vendor>
+    <rpm:group>Unspecified</rpm:group>
+    <rpm:buildhost>buildhw-07.phx2.fedoraproject.org</rpm:buildhost>
+    <rpm:sourcerpm>GraphicsMagick-1.3.34-1.fc31.src.rpm</rpm:sourcerpm>
+    <rpm:header-range start="4504" end="9304"/>
+    <rpm:provides>
+      <rpm:entry name="GraphicsMagick-c++" flags="EQ" epoch="0" ver="1.3.34" rel="1.fc31"/>
+      <rpm:entry name="GraphicsMagick-c++(x86-32)" flags="EQ" epoch="0" ver="1.3.34" rel="1.fc31"/>
+      <rpm:entry name="libGraphicsMagick++-Q16.so.12"/>
+    </rpm:provides>
+    <rpm:requires>
+      <rpm:entry name="GraphicsMagick(x86-32)" flags="EQ" epoch="0" ver="1.3.34" rel="1.fc31"/>
+      <rpm:entry name="libGraphicsMagick-Q16.so.3"/>
+      <rpm:entry name="libICE.so.6"/>
+      <rpm:entry name="libSM.so.6"/>
+      <rpm:entry name="libX11.so.6"/>
+      <rpm:entry name="libXext.so.6"/>
+      <rpm:entry name="libbz2.so.1"/>
+      <rpm:entry name="libfreetype.so.6"/>
+      <rpm:entry name="libgcc_s.so.1"/>
+      <rpm:entry name="libgcc_s.so.1(GCC_3.0)"/>
+      <rpm:entry name="liblcms2.so.2"/>
+      <rpm:entry name="libltdl.so.7"/>
+      <rpm:entry name="liblzma.so.5"/>
+      <rpm:entry name="libm.so.6"/>
+      <rpm:entry name="libm.so.6(GLIBC_2.0)"/>
+      <rpm:entry name="libpthread.so.0"/>
+      <rpm:entry name="libstdc++.so.6"/>
+      <rpm:entry name="libstdc++.so.6(CXXABI_1.3)"/>
+      <rpm:entry name="libstdc++.so.6(CXXABI_1.3.8)"/>
+      <rpm:entry name="libstdc++.so.6(CXXABI_1.3.9)"/>
+      <rpm:entry name="libstdc++.so.6(GLIBCXX_3.4)"/>
+      <rpm:entry name="libstdc++.so.6(GLIBCXX_3.4.15)"/>
+      <rpm:entry name="libstdc++.so.6(GLIBCXX_3.4.20)"/>
+      <rpm:entry name="libz.so.1"/>
+      <rpm:entry name="rtld(GNU_HASH)"/>
+      <rpm:entry name="libc.so.6(GLIBC_2.4)"/>
+    </rpm:requires>
+  </format>
+</package>
+<package type="rpm">
+  <name>GraphicsMagick-devel</name>
+  <arch>i686</arch>
+  <version epoch="0" ver="1.3.34" rel="1.fc31"/>
+  <checksum type="sha256" pkgid="YES">f8d8829a4e98d19dedf755f0ff0b5b499dcd1bf0d52056da54eb5b77638ba3c4</checksum>
+  <summary>Libraries and header files for GraphicsMagick app development</summary>
+  <description>GraphicsMagick-devel contains the Libraries and header files you'll
+need to develop GraphicsMagick applications. GraphicsMagick is an image
+manipulation program.
+
+If you want to create applications that will use GraphicsMagick code or
+APIs, you need to install GraphicsMagick-devel as well as GraphicsMagick.
+You do not need to install it if you just want to use GraphicsMagick,
+however.</description>
+  <packager>Fedora Project</packager>
+  <url>http://www.graphicsmagick.org/</url>
+  <time file="1577814300" build="1577744183"/>
+  <size package="75503" installed="356110" archive="369096"/>
+  <location href="Packages/g/GraphicsMagick-devel-1.3.34-1.fc31.i686.rpm"/>
+  <format>
+    <rpm:license>MIT</rpm:license>
+    <rpm:vendor>Fedora Project</rpm:vendor>
+    <rpm:group>Unspecified</rpm:group>
+    <rpm:buildhost>buildhw-07.phx2.fedoraproject.org</rpm:buildhost>
+    <rpm:sourcerpm>GraphicsMagick-1.3.34-1.fc31.src.rpm</rpm:sourcerpm>
+    <rpm:header-range start="4504" end="19352"/>
+    <rpm:provides>
+      <rpm:entry name="GraphicsMagick-devel" flags="EQ" epoch="0" ver="1.3.34" rel="1.fc31"/>
+      <rpm:entry name="GraphicsMagick-devel(x86-32)" flags="EQ" epoch="0" ver="1.3.34" rel="1.fc31"/>
+      <rpm:entry name="pkgconfig(GraphicsMagick)" flags="EQ" epoch="0" ver="1.3.34"/>
+      <rpm:entry name="pkgconfig(GraphicsMagickWand)" flags="EQ" epoch="0" ver="1.3.34"/>
+    </rpm:provides>
+    <rpm:requires>
+      <rpm:entry name="/usr/bin/pkg-config"/>
+      <rpm:entry name="/usr/bin/sh"/>
+      <rpm:entry name="GraphicsMagick(x86-32)" flags="EQ" epoch="0" ver="1.3.34" rel="1.fc31"/>
+      <rpm:entry name="libGraphicsMagick-Q16.so.3"/>
+      <rpm:entry name="libGraphicsMagickWand-Q16.so.2"/>
+      <rpm:entry name="pkgconfig(GraphicsMagick)"/>
+    </rpm:requires>
+    <file>/usr/bin/GraphicsMagick-config</file>
+    <file>/usr/bin/GraphicsMagickWand-config</file>
+  </format>
+</package>
+<package type="rpm">
+  <name>ImageMagick</name>
+  <arch>i686</arch>
+  <version epoch="1" ver="6.9.10.86" rel="1.fc31"/>
+  <checksum type="sha256" pkgid="YES">880e700da36911f0c008ed73082fdedf01ee1b771688e883f3565921cd2f4b6f</checksum>
+  <summary>An X application for displaying and manipulating images</summary>
+  <description>ImageMagick is an image display and manipulation tool for the X
+Window System. ImageMagick can read and write JPEG, TIFF, PNM, GIF,
+and Photo CD image formats. It can resize, rotate, sharpen, color
+reduce, or add special effects to an image, and when finished you can
+either save the completed work in the original format or a different
+one. ImageMagick also includes command line programs for creating
+animated or transparent .gifs, creating composite images, creating
+thumbnail images, and more.
+
+ImageMagick is one of your choices if you need a program to manipulate
+and display images. If you want to develop your own applications
+which use ImageMagick code or APIs, you need to install
+ImageMagick-devel as well.</description>
+  <packager>Fedora Project</packager>
+  <url>http://www.imagemagick.org/</url>
+  <time file="1578946815" build="1578939940"/>
+  <size package="163818" installed="635937" archive="644272"/>
+  <location href="Packages/i/ImageMagick-6.9.10.86-1.fc31.i686.rpm"/>
+  <format>
+    <rpm:license>ImageMagick</rpm:license>
+    <rpm:vendor>Fedora Project</rpm:vendor>
+    <rpm:group>Unspecified</rpm:group>
+    <rpm:buildhost>buildhw-12.phx2.fedoraproject.org</rpm:buildhost>
+    <rpm:sourcerpm>ImageMagick-6.9.10.86-1.fc31.src.rpm</rpm:sourcerpm>
+    <rpm:header-range start="4504" end="19216"/>
+    <rpm:provides>
+      <rpm:entry name="ImageMagick" flags="EQ" epoch="1" ver="6.9.10.86" rel="1.fc31"/>
+      <rpm:entry name="ImageMagick(x86-32)" flags="EQ" epoch="1" ver="6.9.10.86" rel="1.fc31"/>
+    </rpm:provides>
+    <rpm:requires>
+      <rpm:entry name="ImageMagick-libs(x86-32)" flags="EQ" epoch="1" ver="6.9.10.86" rel="1.fc31"/>
+      <rpm:entry name="libMagickCore-6.Q16.so.6"/>
+      <rpm:entry name="libMagickWand-6.Q16.so.6"/>
+      <rpm:entry name="rtld(GNU_HASH)"/>
+      <rpm:entry name="libc.so.6(GLIBC_2.4)"/>
+    </rpm:requires>
+    <file>/usr/bin/animate</file>
+    <file>/usr/bin/compare</file>
+    <file>/usr/bin/composite</file>
+    <file>/usr/bin/conjure</file>
+    <file>/usr/bin/convert</file>
+    <file>/usr/bin/display</file>
+    <file>/usr/bin/identify</file>
+    <file>/usr/bin/import</file>
+    <file>/usr/bin/mogrify</file>
+    <file>/usr/bin/montage</file>
+    <file>/usr/bin/stream</file>
+  </format>
+</package>
+<package type="rpm">
+  <name>ImageMagick-c++-devel</name>
+  <arch>i686</arch>
+  <version epoch="1" ver="6.9.10.86" rel="1.fc31"/>
+  <checksum type="sha256" pkgid="YES">9c22525ce337817559595aae5a6d5b9d91ae3c6405fa26ec42e875e43d2b7063</checksum>
+  <summary>C++ bindings for the ImageMagick library</summary>
+  <description>ImageMagick-devel contains the static libraries and header files you'll
+need to develop ImageMagick applications using the Magick++ C++ bindings.
+ImageMagick is an image manipulation program.
+
+If you want to create applications that will use Magick++ code
+or APIs, you'll need to install ImageMagick-c++-devel, ImageMagick-devel and
+ImageMagick.
+You don't need to install it if you just want to use ImageMagick, or if you
+want to develop/compile applications using the ImageMagick C interface,
+however.</description>
+  <packager>Fedora Project</packager>
+  <url>http://www.imagemagick.org/</url>
+  <time file="1578946814" build="1578939940"/>
+  <size package="94373" installed="410957" archive="417396"/>
+  <location href="Packages/i/ImageMagick-c++-devel-6.9.10.86-1.fc31.i686.rpm"/>
+  <format>
+    <rpm:license>ImageMagick</rpm:license>
+    <rpm:vendor>Fedora Project</rpm:vendor>
+    <rpm:group>Unspecified</rpm:group>
+    <rpm:buildhost>buildhw-12.phx2.fedoraproject.org</rpm:buildhost>
+    <rpm:sourcerpm>ImageMagick-6.9.10.86-1.fc31.src.rpm</rpm:sourcerpm>
+    <rpm:header-range start="4504" end="15388"/>
+    <rpm:provides>
+      <rpm:entry name="ImageMagick-c++-devel" flags="EQ" epoch="1" ver="6.9.10.86" rel="1.fc31"/>
+      <rpm:entry name="ImageMagick-c++-devel(x86-32)" flags="EQ" epoch="1" ver="6.9.10.86" rel="1.fc31"/>
+      <rpm:entry name="pkgconfig(ImageMagick++)" flags="EQ" epoch="0" ver="6.9.10"/>
+      <rpm:entry name="pkgconfig(ImageMagick++-6.Q16)" flags="EQ" epoch="0" ver="6.9.10"/>
+      <rpm:entry name="pkgconfig(Magick++)" flags="EQ" epoch="0" ver="6.9.10"/>
+      <rpm:entry name="pkgconfig(Magick++-6.Q16)" flags="EQ" epoch="0" ver="6.9.10"/>
+    </rpm:provides>
+    <rpm:requires>
+      <rpm:entry name="/usr/bin/pkg-config"/>
+      <rpm:entry name="/usr/bin/sh"/>
+      <rpm:entry name="ImageMagick-c++(x86-32)" flags="EQ" epoch="1" ver="6.9.10.86" rel="1.fc31"/>
+      <rpm:entry name="ImageMagick-devel(x86-32)" flags="EQ" epoch="1" ver="6.9.10.86" rel="1.fc31"/>
+      <rpm:entry name="libMagick++-6.Q16.so.8"/>
+      <rpm:entry name="pkgconfig(MagickWand)"/>
+    </rpm:requires>
+    <file>/usr/bin/Magick++-config</file>
+  </format>
+</package>
+<package type="rpm">
+  <name>ImageMagick-devel</name>
+  <arch>i686</arch>
+  <version epoch="1" ver="6.9.10.86" rel="1.fc31"/>
+  <checksum type="sha256" pkgid="YES">e802d9d12bb6cc8ffe06589c20b9fb44f458fb26b6119aeeb2fc8c13a5f98658</checksum>
+  <summary>Library links and header files for ImageMagick app development</summary>
+  <description>ImageMagick-devel contains the library links and header files you'll
+need to develop ImageMagick applications. ImageMagick is an image
+manipulation program.
+
+If you want to create applications that will use ImageMagick code or
+APIs, you need to install ImageMagick-devel as well as ImageMagick.
+You do not need to install it if you just want to use ImageMagick,
+however.</description>
+  <packager>Fedora Project</packager>
+  <url>http://www.imagemagick.org/</url>
+  <time file="1578946816" build="1578939940"/>
+  <size package="95177" installed="513329" archive="536104"/>
+  <location href="Packages/i/ImageMagick-devel-6.9.10.86-1.fc31.i686.rpm"/>
+  <format>
+    <rpm:license>ImageMagick</rpm:license>
+    <rpm:vendor>Fedora Project</rpm:vendor>
+    <rpm:group>Unspecified</rpm:group>
+    <rpm:buildhost>buildhw-12.phx2.fedoraproject.org</rpm:buildhost>
+    <rpm:sourcerpm>ImageMagick-6.9.10.86-1.fc31.src.rpm</rpm:sourcerpm>
+    <rpm:header-range start="4504" end="29928"/>
+    <rpm:provides>
+      <rpm:entry name="ImageMagick-devel" flags="EQ" epoch="1" ver="6.9.10.86" rel="1.fc31"/>
+      <rpm:entry name="ImageMagick-devel(x86-32)" flags="EQ" epoch="1" ver="6.9.10.86" rel="1.fc31"/>
+      <rpm:entry name="pkgconfig(ImageMagick)" flags="EQ" epoch="0" ver="6.9.10"/>
+      <rpm:entry name="pkgconfig(ImageMagick-6.Q16)" flags="EQ" epoch="0" ver="6.9.10"/>
+      <rpm:entry name="pkgconfig(MagickCore)" flags="EQ" epoch="0" ver="6.9.10"/>
+      <rpm:entry name="pkgconfig(MagickCore-6.Q16)" flags="EQ" epoch="0" ver="6.9.10"/>
+      <rpm:entry name="pkgconfig(MagickWand)" flags="EQ" epoch="0" ver="6.9.10"/>
+      <rpm:entry name="pkgconfig(MagickWand-6.Q16)" flags="EQ" epoch="0" ver="6.9.10"/>
+      <rpm:entry name="pkgconfig(Wand)" flags="EQ" epoch="0" ver="6.9.10"/>
+      <rpm:entry name="pkgconfig(Wand-6.Q16)" flags="EQ" epoch="0" ver="6.9.10"/>
+    </rpm:provides>
+    <rpm:requires>
+      <rpm:entry name="/usr/bin/pkg-config"/>
+      <rpm:entry name="/usr/bin/sh"/>
+      <rpm:entry name="ImageMagick(x86-32)" flags="EQ" epoch="1" ver="6.9.10.86" rel="1.fc31"/>
+      <rpm:entry name="ImageMagick-libs(x86-32)" flags="EQ" epoch="1" ver="6.9.10.86" rel="1.fc31"/>
+      <rpm:entry name="OpenEXR-devel"/>
+      <rpm:entry name="bzip2-devel"/>
+      <rpm:entry name="freetype-devel"/>
+      <rpm:entry name="jasper-devel"/>
+      <rpm:entry name="lcms2-devel"/>
+      <rpm:entry name="libMagickCore-6.Q16.so.6"/>
+      <rpm:entry name="libMagickWand-6.Q16.so.6"/>
+      <rpm:entry name="libX11-devel"/>
+      <rpm:entry name="libXext-devel"/>
+      <rpm:entry name="libXt-devel"/>
+      <rpm:entry name="libgs-devel"/>
+      <rpm:entry name="libjpeg-devel"/>
+      <rpm:entry name="libtiff-devel"/>
+      <rpm:entry name="libwebp-devel"/>
+      <rpm:entry name="pkgconfig"/>
+      <rpm:entry name="pkgconfig(MagickCore)"/>
+      <rpm:entry name="pkgconfig(MagickCore-6.Q16)"/>
+    </rpm:requires>
+    <file>/usr/bin/Magick-config</file>
+    <file>/usr/bin/MagickCore-config</file>
+    <file>/usr/bin/MagickWand-config</file>
+    <file>/usr/bin/Wand-config</file>
+  </format>
+</package>
+<package type="rpm">
+  <name>InsightToolkit-vtk-devel</name>
+  <arch>i686</arch>
+  <version epoch="0" ver="4.13.1" rel="3.fc31"/>
+  <checksum type="sha256" pkgid="YES">307153dada4114e189f73dc40882eae16f7bb543631948f7697348aebfd038be</checksum>
+  <summary>Libraries and header files for development of ITK-VTK bridge</summary>
+  <description>Libraries and header files for development of ITK-VTK bridge</description>
+  <packager>Fedora Project</packager>
+  <url>https://www.itk.org/</url>
+  <time file="1570525923" build="1569080729"/>
+  <size package="14576" installed="25813" archive="27268"/>
+  <location href="Packages/i/InsightToolkit-vtk-devel-4.13.1-3.fc31.i686.rpm"/>
+  <format>
+    <rpm:license>ASL 2.0</rpm:license>
+    <rpm:vendor>Fedora Project</rpm:vendor>
+    <rpm:group>Unspecified</rpm:group>
+    <rpm:buildhost>buildvm-04.phx2.fedoraproject.org</rpm:buildhost>
+    <rpm:sourcerpm>InsightToolkit-4.13.1-3.fc31.src.rpm</rpm:sourcerpm>
+    <rpm:header-range start="4504" end="8924"/>
+    <rpm:provides>
+      <rpm:entry name="InsightToolkit-vtk-devel" flags="EQ" epoch="0" ver="4.13.1" rel="3.fc31"/>
+      <rpm:entry name="InsightToolkit-vtk-devel(x86-32)" flags="EQ" epoch="0" ver="4.13.1" rel="3.fc31"/>
+    </rpm:provides>
+    <rpm:requires>
+      <rpm:entry name="InsightToolkit-vtk(x86-32)" flags="EQ" epoch="0" ver="4.13.1" rel="3.fc31"/>
+      <rpm:entry name="libITKVtkGlue-4.13.so.1"/>
+      <rpm:entry name="vtk-devel(x86-32)"/>
+    </rpm:requires>
+  </format>
+</package>
+<package type="rpm">
+  <name>PackageKit-cron</name>
+  <arch>x86_64</arch>
+  <version epoch="0" ver="1.1.12" rel="14.fc31"/>
+  <checksum type="sha256" pkgid="YES">c9d736ccabfe4fe3d2a7daf2c5430bf146732a701e74e32c0882e531b7a0c65e</checksum>
+  <summary>Cron job and related utilities for PackageKit</summary>
+  <description>Crontab and utilities for running PackageKit as a cron job.</description>
+  <packager>Fedora Project</packager>
+  <url>http://www.freedesktop.org/software/PackageKit/</url>
+  <time file="1584123959" build="1584121383"/>
+  <size package="9610" installed="2657" archive="3088"/>
+  <location href="Packages/p/PackageKit-cron-1.1.12-14.fc31.x86_64.rpm"/>
+  <format>
+    <rpm:license>GPLv2+ and LGPLv2+</rpm:license>
+    <rpm:vendor>Fedora Project</rpm:vendor>
+    <rpm:group>Unspecified</rpm:group>
+    <rpm:buildhost>buildvm-24.phx2.fedoraproject.org</rpm:buildhost>
+    <rpm:sourcerpm>PackageKit-1.1.12-14.fc31.src.rpm</rpm:sourcerpm>
+    <rpm:header-range start="4504" end="8240"/>
+    <rpm:provides>
+      <rpm:entry name="PackageKit-cron" flags="EQ" epoch="0" ver="1.1.12" rel="14.fc31"/>
+      <rpm:entry name="PackageKit-cron(x86-64)" flags="EQ" epoch="0" ver="1.1.12" rel="14.fc31"/>
+      <rpm:entry name="config(PackageKit-cron)" flags="EQ" epoch="0" ver="1.1.12" rel="14.fc31"/>
+    </rpm:provides>
+    <rpm:requires>
+      <rpm:entry name="/usr/bin/bash"/>
+      <rpm:entry name="PackageKit(x86-64)" flags="EQ" epoch="0" ver="1.1.12" rel="14.fc31"/>
+      <rpm:entry name="crontabs"/>
+    </rpm:requires>
+    <file>/etc/cron.daily/packagekit-background.cron</file>
+    <file>/etc/sysconfig/packagekit-background</file>
+  </format>
+</package>
+<package type="rpm">
+  <name>R-R.devices</name>
+  <arch>noarch</arch>
+  <version epoch="0" ver="2.16.1" rel="1.fc31"/>
+  <checksum type="sha256" pkgid="YES">aba6e8ab8b05f49c7b8ecf9fd94c89c73be88e90a5f1bf91bd3107a816444bb6</checksum>
+  <summary>Unified Handling of Graphics Devices</summary>
+  <description>Functions for creating plots and image files in a unified way regardless of
+output format (EPS, PDF, PNG, SVG, TIFF, WMF, etc.). Default device options as
+well as scales and aspect ratios are controlled in a uniform way across all
+device types. Switching output format requires minimal changes in code. This
+package is ideal for large-scale batch processing, because it will never leave
+open graphics devices or incomplete image files behind, even on errors or user
+interrupts.</description>
+  <packager>Fedora Project</packager>
+  <url>https://CRAN.R-project.org/package=R.devices</url>
+  <time file="1571912724" build="1571911163"/>
+  <size package="394446" installed="485684" archive="497160"/>
+  <location href="Packages/r/R-R.devices-2.16.1-1.fc31.noarch.rpm"/>
+  <format>
+    <rpm:license>LGPLv2+</rpm:license>
+    <rpm:vendor>Fedora Project</rpm:vendor>
+    <rpm:group>Unspecified</rpm:group>
+    <rpm:buildhost>unused</rpm:buildhost>
+    <rpm:sourcerpm>R-R.devices-2.16.1-1.fc31.src.rpm</rpm:sourcerpm>
+    <rpm:header-range start="4504" end="17884"/>
+    <rpm:provides>
+      <rpm:entry name="R(R.devices)" flags="EQ" epoch="0" ver="2.16.1"/>
+      <rpm:entry name="R-R.devices" flags="EQ" epoch="0" ver="2.16.1" rel="1.fc31"/>
+    </rpm:provides>
+    <rpm:requires>
+      <rpm:entry name="R(R.methodsS3)" flags="GE" epoch="0" ver="1.7.1"/>
+      <rpm:entry name="R(R.oo)" flags="GE" epoch="0" ver="1.21.0"/>
+      <rpm:entry name="R(R.utils)" flags="GE" epoch="0" ver="2.6.0"/>
+      <rpm:entry name="R(base64enc)" flags="GE" epoch="0" ver="0.1" rel="2"/>
+      <rpm:entry name="R(grDevices)"/>
+      <rpm:entry name="R-core" flags="GE" epoch="0" ver="2.14.0"/>
+    </rpm:requires>
+    <rpm:suggests>
+      <rpm:entry name="R(Cairo)" flags="GE" epoch="0" ver="1.5" rel="9"/>
+      <rpm:entry name="R(R.rsp)"/>
+      <rpm:entry name="R(digest)" flags="GE" epoch="0" ver="0.6.13"/>
+    </rpm:suggests>
+  </format>
+</package>
+<package type="rpm">
+  <name>R-R.rsp</name>
+  <arch>noarch</arch>
+  <version epoch="0" ver="0.43.2" rel="1.fc31"/>
+  <checksum type="sha256" pkgid="YES">5479db59076be1f7c660059a011d5afce42dc2e351838b3346ae8d1ce3250d78</checksum>
+  <summary>Dynamic Generation of Scientific Reports</summary>
+  <description>The RSP markup language makes any text-based document come alive.  RSP provides
+a powerful markup for controlling the content and output of LaTeX, HTML,
+Markdown, AsciiDoc, Sweave and knitr documents (and more), e.g. 'Today's date
+is &lt;%=Sys.Date()%&gt;'.  Contrary to many other literate programming languages,
+with RSP it is straightforward to loop over mixtures of code and text sections,
+e.g. in month-by-month summaries.  RSP has also several preprocessing
+directives for incorporating static and dynamic contents of external files
+(local or online) among other things.  Functions rstring() and rcat() make it
+easy to process RSP strings, rsource() sources an RSP file as it was an R
+script, while rfile() compiles it (even online) into its final output format,
+e.g. rfile('report.tex.rsp') generates 'report.pdf' and rfile('report.md.rsp')
+generates 'report.html'.  RSP is ideal for self-contained scientific reports
+and R package vignettes.  It's easy to use - if you know how to write an R
+script, you'll be up and running within minutes.</description>
+  <packager>Fedora Project</packager>
+  <url>https://CRAN.R-project.org/package=R.rsp</url>
+  <time file="1571299237" build="1571297642"/>
+  <size package="1605160" installed="2256272" archive="2320076"/>
+  <location href="Packages/r/R-R.rsp-0.43.2-1.fc31.noarch.rpm"/>
+  <format>
+    <rpm:license>LGPLv2+</rpm:license>
+    <rpm:vendor>Fedora Project</rpm:vendor>
+    <rpm:group>Unspecified</rpm:group>
+    <rpm:buildhost>unused</rpm:buildhost>
+    <rpm:sourcerpm>R-R.rsp-0.43.2-1.fc31.src.rpm</rpm:sourcerpm>
+    <rpm:header-range start="4504" end="63840"/>
+    <rpm:provides>
+      <rpm:entry name="R(R.rsp)" flags="EQ" epoch="0" ver="0.43.2"/>
+      <rpm:entry name="R-R.rsp" flags="EQ" epoch="0" ver="0.43.2" rel="1.fc31"/>
+    </rpm:provides>
+    <rpm:requires>
+      <rpm:entry name="/usr/bin/sh"/>
+      <rpm:entry name="R(R.cache)" flags="GE" epoch="0" ver="0.13.0"/>
+      <rpm:entry name="R(R.methodsS3)" flags="GE" epoch="0" ver="1.7.1"/>
+      <rpm:entry name="R(R.oo)" flags="GE" epoch="0" ver="1.22.0"/>
+      <rpm:entry name="R(R.utils)"/>
+      <rpm:entry name="R(digest)" flags="GE" epoch="0" ver="0.6.13"/>
+      <rpm:entry name="R(methods)"/>
+      <rpm:entry name="R(stats)"/>
+      <rpm:entry name="R(tools)"/>
+      <rpm:entry name="R(utils)"/>
+      <rpm:entry name="R-core" flags="GE" epoch="0" ver="2.14.0"/>
+    </rpm:requires>
+    <rpm:suggests>
+      <rpm:entry name="R(R.devices)" flags="GE" epoch="0" ver="2.15.1"/>
+      <rpm:entry name="R(base64enc)" flags="GE" epoch="0" ver="0.1" rel="2"/>
+      <rpm:entry name="R(knitr)" flags="GE" epoch="0" ver="1.9"/>
+      <rpm:entry name="R(markdown)" flags="GE" epoch="0" ver="0.8"/>
+      <rpm:entry name="R(tcltk)"/>
+      <rpm:entry name="R-ascii" flags="GE" epoch="0" ver="2.1"/>
+    </rpm:suggests>
+  </format>
+</package>
+<package type="rpm">
+  <name>R-RInside</name>
+  <arch>x86_64</arch>
+  <version epoch="0" ver="0.2.16" rel="1.fc31"/>
+  <checksum type="sha256" pkgid="YES">761c0f02a04b17695f1b24d8f19f816803cf8729eb811c7899504a0f0f9e5b1a</checksum>
+  <summary>C++ Classes to Embed R in C++ (and C) Applications</summary>
+  <description>The RInside packages makes it easier to have "R inside" your C++
+application by providing a C++ wrapper class providing the R
+interpreter.</description>
+  <packager>Fedora Project</packager>
+  <url>https://cran.r-project.org/package=RInside</url>
+  <time file="1585228524" build="1584770956"/>
+  <size package="78584" installed="355677" archive="361140"/>
+  <location href="Packages/r/R-RInside-0.2.16-1.fc31.x86_64.rpm"/>
+  <format>
+    <rpm:license>GPLv2+</rpm:license>
+    <rpm:vendor>Fedora Project</rpm:vendor>
+    <rpm:group>Unspecified</rpm:group>
+    <rpm:buildhost>buildhw-04.phx2.fedoraproject.org</rpm:buildhost>
+    <rpm:sourcerpm>R-RInside-0.2.16-1.fc31.src.rpm</rpm:sourcerpm>
+    <rpm:header-range start="4504" end="13096"/>
+    <rpm:provides>
+      <rpm:entry name="R(RInside)" flags="EQ" epoch="0" ver="0.2.16"/>
+      <rpm:entry name="R-RInside" flags="EQ" epoch="0" ver="0.2.16" rel="1.fc31"/>
+      <rpm:entry name="R-RInside(x86-64)" flags="EQ" epoch="0" ver="0.2.16" rel="1.fc31"/>
+      <rpm:entry name="libRInside.so()(64bit)"/>
+    </rpm:provides>
+    <rpm:requires>
+      <rpm:entry name="R(Rcpp)"/>
+      <rpm:entry name="R-core"/>
+      <rpm:entry name="libR.so()(64bit)"/>
+      <rpm:entry name="libgcc_s.so.1()(64bit)"/>
+      <rpm:entry name="libgcc_s.so.1(GCC_3.0)(64bit)"/>
+      <rpm:entry name="libstdc++.so.6()(64bit)"/>
+      <rpm:entry name="libstdc++.so.6(CXXABI_1.3)(64bit)"/>
+      <rpm:entry name="libstdc++.so.6(GLIBCXX_3.4)(64bit)"/>
+      <rpm:entry name="libstdc++.so.6(GLIBCXX_3.4.11)(64bit)"/>
+      <rpm:entry name="libstdc++.so.6(GLIBCXX_3.4.20)(64bit)"/>
+      <rpm:entry name="libstdc++.so.6(GLIBCXX_3.4.21)(64bit)"/>
+      <rpm:entry name="libstdc++.so.6(GLIBCXX_3.4.9)(64bit)"/>
+      <rpm:entry name="rtld(GNU_HASH)"/>
+      <rpm:entry name="libc.so.6(GLIBC_2.14)(64bit)"/>
+    </rpm:requires>
+  </format>
+</package>
+<package type="rpm">
+  <name>R-RInside-examples</name>
+  <arch>x86_64</arch>
+  <version epoch="0" ver="0.2.16" rel="1.fc31"/>
+  <checksum type="sha256" pkgid="YES">159e3bfeb065bc5875eaf7b034bcfea0f3cc0228e61afa616c3a695b4a003453</checksum>
+  <summary>RInside Examples</summary>
+  <description>Numerous examples are provided in the nine sub-directories of the
+examples directory of the installed package: standard, mpi (for
+parallel computing), qt (showing how to embed RInside inside a Qt GUI
+application), wt (showing how to build a "web-application" using the
+Wt toolkit), armadillo (for RInside use with RcppArmadillo), eigen
+(for RInside use with RcppEigen) and 'c_interface' for a basic C
+interface and 'Ruby' illustration.</description>
+  <packager>Fedora Project</packager>
+  <url>https://cran.r-project.org/package=RInside</url>
+  <time file="1585228524" build="1584770956"/>
+  <size package="60091" installed="193471" archive="212472"/>
+  <location href="Packages/r/R-RInside-examples-0.2.16-1.fc31.x86_64.rpm"/>
+  <format>
+    <rpm:license>GPLv2+</rpm:license>
+    <rpm:vendor>Fedora Project</rpm:vendor>
+    <rpm:group>Unspecified</rpm:group>
+    <rpm:buildhost>buildhw-04.phx2.fedoraproject.org</rpm:buildhost>
+    <rpm:sourcerpm>R-RInside-0.2.16-1.fc31.src.rpm</rpm:sourcerpm>
+    <rpm:header-range start="4504" end="22316"/>
+    <rpm:provides>
+      <rpm:entry name="R-RInside-examples" flags="EQ" epoch="0" ver="0.2.16" rel="1.fc31"/>
+      <rpm:entry name="R-RInside-examples(x86-64)" flags="EQ" epoch="0" ver="0.2.16" rel="1.fc31"/>
+    </rpm:provides>
+    <rpm:requires>
+      <rpm:entry name="R-RInside(x86-64)" flags="EQ" epoch="0" ver="0.2.16" rel="1.fc31"/>
+    </rpm:requires>
+  </format>
+</package>
+<package type="rpm">
+  <name>R-XVector-devel</name>
+  <arch>i686</arch>
+  <version epoch="0" ver="0.24.0" rel="3.fc31"/>
+  <checksum type="sha256" pkgid="YES">77ad6cd60e026dbf3cf5c106091bbf7016f791bcb8d4c4e5718b0bb5b94673fe</checksum>
+  <summary>Development files for R-XVector</summary>
+  <description>Development files for R-XVector.</description>
+  <packager>Fedora Project</packager>
+  <url>http://www.bioconductor.org/packages/release/bioc/html/XVector.html</url>
+  <time file="1574359643" build="1574319974"/>
+  <size package="10602" installed="17731" archive="18504"/>
+  <location href="Packages/r/R-XVector-devel-0.24.0-3.fc31.i686.rpm"/>
+  <format>
+    <rpm:license>Artistic 2.0</rpm:license>
+    <rpm:vendor>Fedora Project</rpm:vendor>
+    <rpm:group>Unspecified</rpm:group>
+    <rpm:buildhost>buildvm-20.phx2.fedoraproject.org</rpm:buildhost>
+    <rpm:sourcerpm>R-XVector-0.24.0-3.fc31.src.rpm</rpm:sourcerpm>
+    <rpm:header-range start="4504" end="8204"/>
+    <rpm:provides>
+      <rpm:entry name="R-XVector-devel" flags="EQ" epoch="0" ver="0.24.0" rel="3.fc31"/>
+      <rpm:entry name="R-XVector-devel(x86-32)" flags="EQ" epoch="0" ver="0.24.0" rel="3.fc31"/>
+    </rpm:provides>
+    <rpm:requires>
+      <rpm:entry name="R-XVector(x86-32)" flags="EQ" epoch="0" ver="0.24.0" rel="3.fc31"/>
+    </rpm:requires>
+  </format>
+</package>
+<package type="rpm">
+  <name>R-backports</name>
+  <arch>x86_64</arch>
+  <version epoch="0" ver="1.1.5" rel="1.fc31"/>
+  <checksum type="sha256" pkgid="YES">09dae965475d8be80a958ddee560eecf2e0c98333443eccc84a66938afb56667</checksum>
+  <summary>Reimplementations of Functions Introduced Since R-3.0.0</summary>
+  <description>Functions introduced or changed since R v3.0.0 are re-implemented in this
+package. The backports are conditionally exported in order to let R resolve
+the function name to either the implemented backport, or the respective
+base version, if available. Package developers can make use of new
+functions or arguments by selectively importing specific backports to
+support older installations.</description>
+  <packager>Fedora Project</packager>
+  <url>https://CRAN.R-project.org/package=backports</url>
+  <time file="1570133916" build="1570073781"/>
+  <size package="71419" installed="98679" archive="107000"/>
+  <location href="Packages/r/R-backports-1.1.5-1.fc31.x86_64.rpm"/>
+  <format>
+    <rpm:license>GPLv2 or GPLv3</rpm:license>
+    <rpm:vendor>Fedora Project</rpm:vendor>
+    <rpm:group>Unspecified</rpm:group>
+    <rpm:buildhost>buildvm-10.phx2.fedoraproject.org</rpm:buildhost>
+    <rpm:sourcerpm>R-backports-1.1.5-1.fc31.src.rpm</rpm:sourcerpm>
+    <rpm:header-range start="4504" end="15228"/>
+    <rpm:provides>
+      <rpm:entry name="R(backports)" flags="EQ" epoch="0" ver="1.1.5"/>
+      <rpm:entry name="R-backports" flags="EQ" epoch="0" ver="1.1.5" rel="1.fc31"/>
+      <rpm:entry name="R-backports(x86-64)" flags="EQ" epoch="0" ver="1.1.5" rel="1.fc31"/>
+    </rpm:provides>
+    <rpm:requires>
+      <rpm:entry name="R(utils)"/>
+      <rpm:entry name="R-core" flags="GE" epoch="0" ver="3.0.0"/>
+      <rpm:entry name="libR.so()(64bit)"/>
+      <rpm:entry name="rtld(GNU_HASH)"/>
+    </rpm:requires>
+  </format>
+</package>
+<package type="rpm">
+  <name>R-callr</name>
+  <arch>noarch</arch>
+  <version epoch="0" ver="3.4.2" rel="1.fc31"/>
+  <checksum type="sha256" pkgid="YES">be758223d0078ea2da7bfb7fc0fac3bf465da52b657a4e9fd3129d04d241a5f6</checksum>
+  <summary>Call R from R</summary>
+  <description>It is sometimes useful to perform a computation in a separate R process,
+without affecting the current R process at all. This packages does exactly
+that.</description>
+  <packager>Fedora Project</packager>
+  <url>https://CRAN.R-project.org/package=callr</url>
+  <time file="1582707124" build="1582631439"/>
+  <size package="373084" installed="541963" archive="551032"/>
+  <location href="Packages/r/R-callr-3.4.2-1.fc31.noarch.rpm"/>
+  <format>
+    <rpm:license>MIT</rpm:license>
+    <rpm:vendor>Fedora Project</rpm:vendor>
+    <rpm:group>Unspecified</rpm:group>
+    <rpm:buildhost>buildvm-armv7-16.arm.fedoraproject.org</rpm:buildhost>
+    <rpm:sourcerpm>R-callr-3.4.2-1.fc31.src.rpm</rpm:sourcerpm>
+    <rpm:header-range start="4504" end="16472"/>
+    <rpm:provides>
+      <rpm:entry name="R(callr)" flags="EQ" epoch="0" ver="3.4.2"/>
+      <rpm:entry name="R-callr" flags="EQ" epoch="0" ver="3.4.2" rel="1.fc31"/>
+    </rpm:provides>
+    <rpm:requires>
+      <rpm:entry name="R(R6)"/>
+      <rpm:entry name="R(processx)" flags="GE" epoch="0" ver="3.4.0"/>
+      <rpm:entry name="R(utils)"/>
+      <rpm:entry name="R-core"/>
+    </rpm:requires>
+    <rpm:suggests>
+      <rpm:entry name="R(cliapp)"/>
+      <rpm:entry name="R(crayon)"/>
+      <rpm:entry name="R(fansi)"/>
+      <rpm:entry name="R(pingr)"/>
+      <rpm:entry name="R(ps)"/>
+      <rpm:entry name="R(rprojroot)"/>
+      <rpm:entry name="R(spelling)"/>
+      <rpm:entry name="R(testthat)"/>
+      <rpm:entry name="R(tibble)"/>
+      <rpm:entry name="R(withr)"/>
+    </rpm:suggests>
+  </format>
+</package>
+<package type="rpm">
+  <name>R-cli</name>
+  <arch>noarch</arch>
+  <version epoch="0" ver="2.0.2" rel="1.fc31"/>
+  <checksum type="sha256" pkgid="YES">d3d3a4751f51a4eb6aba37dd1631f9471418ec4dc7f247cf05e09150ce1359ae</checksum>
+  <summary>Helpers for Developing Command Line Interfaces</summary>
+  <description>A suite of tools to build attractive command line interfaces ('CLIs'), from
+semantic elements: headings, lists, alerts, paragraphs, etc. Supports custom
+themes via a 'CSS'-like language. It also contains a number of lower level
+'CLI' elements: rules, boxes, trees, and 'Unicode' symbols with 'ASCII'
+alternatives. It integrates with the 'crayon' package to support 'ANSI'
+terminal colors.</description>
+  <packager>Fedora Project</packager>
+  <url>https://CRAN.R-project.org/package=cli</url>
+  <time file="1582927757" build="1582927508"/>
+  <size package="421726" installed="583625" archive="599292"/>
+  <location href="Packages/r/R-cli-2.0.2-1.fc31.noarch.rpm"/>
+  <format>
+    <rpm:license>MIT</rpm:license>
+    <rpm:vendor>Fedora Project</rpm:vendor>
+    <rpm:group>Unspecified</rpm:group>
+    <rpm:buildhost>buildvm-armv7-22.arm.fedoraproject.org</rpm:buildhost>
+    <rpm:sourcerpm>R-cli-2.0.2-1.fc31.src.rpm</rpm:sourcerpm>
+    <rpm:header-range start="4504" end="22156"/>
+    <rpm:provides>
+      <rpm:entry name="R(cli)" flags="EQ" epoch="0" ver="2.0.2"/>
+      <rpm:entry name="R-cli" flags="EQ" epoch="0" ver="2.0.2" rel="1.fc31"/>
+    </rpm:provides>
+    <rpm:requires>
+      <rpm:entry name="/usr/bin/Rscript"/>
+      <rpm:entry name="R(assertthat)"/>
+      <rpm:entry name="R(crayon)" flags="GE" epoch="0" ver="1.3.4"/>
+      <rpm:entry name="R(fansi)"/>
+      <rpm:entry name="R(glue)"/>
+      <rpm:entry name="R(methods)"/>
+      <rpm:entry name="R(utils)"/>
+      <rpm:entry name="R-core" flags="GE" epoch="0" ver="2.10"/>
+    </rpm:requires>
+    <rpm:suggests>
+      <rpm:entry name="R(callr)"/>
+      <rpm:entry name="R(htmlwidgets)"/>
+      <rpm:entry name="R(knitr)"/>
+      <rpm:entry name="R(mockery)"/>
+      <rpm:entry name="R(prettycode)" flags="GE" epoch="0" ver="1.1.0"/>
+      <rpm:entry name="R(rmarkdown)"/>
+      <rpm:entry name="R(rstudioapi)"/>
+      <rpm:entry name="R(testthat)"/>
+      <rpm:entry name="R(withr)"/>
+    </rpm:suggests>
+  </format>
+</package>
+<package type="rpm">
+  <name>R-curl</name>
+  <arch>x86_64</arch>
+  <version epoch="0" ver="4.3" rel="1.fc31"/>
+  <checksum type="sha256" pkgid="YES">826f4de1836c0c9c1664a773fce4d694bd6adaeaf9edd7ff684468187333125c</checksum>
+  <summary>A Modern and Flexible Web Client for R</summary>
+  <description>The curl() and curl_download() functions provide highly configurable drop-in
+replacements for base url() and download.file() with better performance,
+support for encryption (https, ftps), gzip compression, authentication, and
+other 'libcurl' goodies. The core of the package implements a framework for
+performing fully customized requests where data can be processed either in
+memory, on disk, or streaming via the callback or connection interfaces. Some
+knowledge of 'libcurl' is recommended; for a more-user-friendly web client see
+the 'httr' package which builds on this package with http specific tools and
+logic.</description>
+  <packager>Fedora Project</packager>
+  <url>https://CRAN.R-project.org/package=curl</url>
+  <time file="1575346747" build="1575342979"/>
+  <size package="431106" installed="2087296" archive="2096692"/>
+  <location href="Packages/r/R-curl-4.3-1.fc31.x86_64.rpm"/>
+  <format>
+    <rpm:license>MIT</rpm:license>
+    <rpm:vendor>Fedora Project</rpm:vendor>
+    <rpm:group>Unspecified</rpm:group>
+    <rpm:buildhost>buildvm-29.phx2.fedoraproject.org</rpm:buildhost>
+    <rpm:sourcerpm>R-curl-4.3-1.fc31.src.rpm</rpm:sourcerpm>
+    <rpm:header-range start="4504" end="17228"/>
+    <rpm:provides>
+      <rpm:entry name="R(curl)" flags="EQ" epoch="0" ver="4.3"/>
+      <rpm:entry name="R-curl" flags="EQ" epoch="0" ver="4.3" rel="1.fc31"/>
+      <rpm:entry name="R-curl(x86-64)" flags="EQ" epoch="0" ver="4.3" rel="1.fc31"/>
+    </rpm:provides>
+    <rpm:requires>
+      <rpm:entry name="R-core" flags="GE" epoch="0" ver="3.0.0"/>
+      <rpm:entry name="libR.so()(64bit)"/>
+      <rpm:entry name="libcurl.so.4()(64bit)"/>
+      <rpm:entry name="rtld(GNU_HASH)"/>
+      <rpm:entry name="libc.so.6(GLIBC_2.15)(64bit)"/>
+    </rpm:requires>
+    <rpm:suggests>
+      <rpm:entry name="R(httpuv)" flags="GE" epoch="0" ver="1.4.4"/>
+      <rpm:entry name="R(jsonlite)"/>
+      <rpm:entry name="R(knitr)"/>
+      <rpm:entry name="R(magrittr)"/>
+      <rpm:entry name="R(rmarkdown)"/>
+      <rpm:entry name="R(spelling)"/>
+      <rpm:entry name="R(testthat)" flags="GE" epoch="0" ver="1.0.0"/>
+      <rpm:entry name="R(webutils)"/>
+    </rpm:suggests>
+  </format>
+</package>
+<package type="rpm">
+  <name>R-cyclocomp</name>
+  <arch>noarch</arch>
+  <version epoch="0" ver="1.1.0" rel="1.fc31"/>
+  <checksum type="sha256" pkgid="YES">eb4574d3fe68d8bff8ee663bc6ae7d4d688fe8e63d9b7546bbeace948458bae5</checksum>
+  <summary>Cyclomatic Complexity of R Code</summary>
+  <description>Cyclomatic complexity is a software metric (measurement), used to indicate
+the complexity of a program. It is a quantitative measure of the number of
+linearly independent paths through a program's source code. It was
+developed by Thomas J. McCabe, Sr. in 1976.</description>
+  <packager>Fedora Project</packager>
+  <url>https://CRAN.R-project.org/package=cyclocomp</url>
+  <time file="1570473663" build="1570472980"/>
+  <size package="41599" installed="38387" archive="43092"/>
+  <location href="Packages/r/R-cyclocomp-1.1.0-1.fc31.noarch.rpm"/>
+  <format>
+    <rpm:license>MIT</rpm:license>
+    <rpm:vendor>Fedora Project</rpm:vendor>
+    <rpm:group>Unspecified</rpm:group>
+    <rpm:buildhost>buildvm-armv7-08.arm.fedoraproject.org</rpm:buildhost>
+    <rpm:sourcerpm>R-cyclocomp-1.1.0-1.fc31.src.rpm</rpm:sourcerpm>
+    <rpm:header-range start="4504" end="10852"/>
+    <rpm:provides>
+      <rpm:entry name="R(cyclocomp)" flags="EQ" epoch="0" ver="1.1.0"/>
+      <rpm:entry name="R-cyclocomp" flags="EQ" epoch="0" ver="1.1.0" rel="1.fc31"/>
+    </rpm:provides>
+    <rpm:requires>
+      <rpm:entry name="R(callr)"/>
+      <rpm:entry name="R(crayon)"/>
+      <rpm:entry name="R(desc)"/>
+      <rpm:entry name="R(remotes)"/>
+      <rpm:entry name="R(withr)"/>
+      <rpm:entry name="R-core"/>
+    </rpm:requires>
+    <rpm:suggests>
+      <rpm:entry name="R(testthat)"/>
+    </rpm:suggests>
+  </format>
+</package>
+<package type="rpm">
+  <name>R-deldir</name>
+  <arch>x86_64</arch>
+  <version epoch="0" ver="0.1.25" rel="1.fc31"/>
+  <checksum type="sha256" pkgid="YES">6d9c130810333486a3b6916bb483a1e2b117779aa327b0a84a9891199dad43cf</checksum>
+  <summary>Delaunay Triangulation and Dirichlet (Voronoi) Tessellation</summary>
+  <description>Calculates the Delaunay triangulation and the Dirichlet or Voronoi
+tessellation (with respect to the entire plane) of a planar point set.
+Plots triangulations and tessellations in various ways.  Clips
+tessellations to sub-windows. Calculates perimeters of tessellations.
+Summarises information about the tiles of the tessellation.</description>
+  <packager>Fedora Project</packager>
+  <url>https://CRAN.R-project.org/package=deldir</url>
+  <time file="1582706737" build="1582626345"/>
+  <size package="236844" installed="334143" archive="343260"/>
+  <location href="Packages/r/R-deldir-0.1.25-1.fc31.x86_64.rpm"/>
+  <format>
+    <rpm:license>GPLv2+</rpm:license>
+    <rpm:vendor>Fedora Project</rpm:vendor>
+    <rpm:group>Unspecified</rpm:group>
+    <rpm:buildhost>buildvm-19.phx2.fedoraproject.org</rpm:buildhost>
+    <rpm:sourcerpm>R-deldir-0.1.25-1.fc31.src.rpm</rpm:sourcerpm>
+    <rpm:header-range start="4504" end="16504"/>
+    <rpm:provides>
+      <rpm:entry name="R(deldir)" flags="EQ" epoch="0" ver="0.1" rel="25"/>
+      <rpm:entry name="R-deldir" flags="EQ" epoch="0" ver="0.1.25" rel="1.fc31"/>
+      <rpm:entry name="R-deldir(x86-64)" flags="EQ" epoch="0" ver="0.1.25" rel="1.fc31"/>
+    </rpm:provides>
+    <rpm:requires>
+      <rpm:entry name="R(grDevices)"/>
+      <rpm:entry name="R(graphics)"/>
+      <rpm:entry name="R-core" flags="GE" epoch="0" ver="0.99"/>
+      <rpm:entry name="libR.so()(64bit)"/>
+      <rpm:entry name="libm.so.6()(64bit)"/>
+      <rpm:entry name="libm.so.6(GLIBC_2.29)(64bit)"/>
+      <rpm:entry name="rtld(GNU_HASH)"/>
+      <rpm:entry name="libc.so.6(GLIBC_2.4)(64bit)"/>
+    </rpm:requires>
+    <rpm:suggests>
+      <rpm:entry name="R(polyclip)"/>
+    </rpm:suggests>
+  </format>
+</package>
+</metadata>

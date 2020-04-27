@@ -113,13 +113,13 @@ class S3:
     def _sync_objects(self, temp_dir: str, repo_objects: Iterable[Package], skip_existing: bool):
         sync = functools.partial(self._sync_object, temp_dir, skip_existing)
         start = time.time()
-        self.log.info(f"Beginning sync of {len(repo_objects)} objects.")
+        self.log.info("Beginning sync of %s objects.", len(repo_objects))
         with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
             # We iterate through the generator to pick up and propagate any Exceptions
             for _ in executor.map(sync, repo_objects):
                 pass
         elapsed = int(time.time() - start)
-        self.log.info(f"Completed syncing {len(repo_objects)} objects in {elapsed} seconds")
+        self.log.info("Completed syncing %s objects in %s seconds", len(repo_objects), elapsed)
 
     def _sync_object(self, temp_dir: str, skip_existing: bool, repo_object: Union[Package, RepodataSection]):
         if skip_existing and self._object_exists(repo_object.destination):
@@ -131,7 +131,7 @@ class S3:
         self._put_object(package_path, repo_object.destination)
         try:
             os.unlink(package_path)
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-except
             self.log.debug("Failed to unlink %s: %s", package_path, e)
 
     def _download_file(self, temp_dir: str, url: str) -> str:
@@ -139,7 +139,7 @@ class S3:
         with self.session.get(url, stream=True) as request:
             request.raise_for_status()
             out_path = join(temp_dir, os.path.basename(url))
-            with open(out_path, 'wb') as f:
+            with open(out_path, "wb") as f:
                 shutil.copyfileobj(request.raw, f)
             return out_path
 
@@ -224,4 +224,4 @@ class S3:
         while data:
             h.update(data)
             data = fp.read(1000000)
-        return base64.b64encode(h.digest()).decode('utf-8')
+        return base64.b64encode(h.digest()).decode("utf-8")

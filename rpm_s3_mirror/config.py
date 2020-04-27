@@ -70,7 +70,7 @@ class ENVConfig(Config):
             elif key == "max_workers":
                 value = int(value)
             elif key == "bootstrap":
-                value = True if value.lower() == "true" else False
+                value = value.lower() == "true"
             self._config[key] = value
 
 

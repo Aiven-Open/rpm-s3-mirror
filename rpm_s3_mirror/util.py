@@ -20,8 +20,8 @@ def validate_checksum(path, checksum_type, checksum) -> None:
 def get_requests_session() -> Session:
     session = requests.session()
     retries = Retry(total=5, backoff_factor=0.1, status_forcelist=[500, 502, 503, 504])
-    session.mount('http://', HTTPAdapter(max_retries=retries))
-    session.mount('https://', HTTPAdapter(max_retries=retries))
+    session.mount("http://", HTTPAdapter(max_retries=retries))
+    session.mount("https://", HTTPAdapter(max_retries=retries))
     return session
 
 
