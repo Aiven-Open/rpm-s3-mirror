@@ -5,7 +5,7 @@ import setuptools
 
 setup(
     name="rpm_s3_mirror",
-    packages=setuptools.find_packages(),
+    packages=["rpm_s3_mirror"],
     version="0.1",
     description="Tool for syncing RPM repositories with S3",
     license="Apache 2.0",
