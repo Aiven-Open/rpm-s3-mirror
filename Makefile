@@ -30,6 +30,9 @@ build-dep-fed:
 
 test: copyright pylint unittest
 
+reformat:
+	yapf --parallel --recursive --in-place tests/ rpm_s3_mirror/
+
 .PHONY: copyright
 copyright:
 	$(eval MISSING_COPYRIGHT := $(shell git ls-files "*.py" | xargs grep -EL "Copyright \(c\) 20.* Aiven|Aiven license OK"))

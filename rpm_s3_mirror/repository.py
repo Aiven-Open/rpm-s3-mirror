@@ -131,8 +131,7 @@ class RPMRepository:
 
     def parse_metadata(self) -> Metadata:
         response = self._req(self.session.get, "repodata/repomd.xml")
-        xml = safe_parse_xml(response.content)
-        repodata = self.parse_repomd(xml)
+        repodata = self.parse_repomd(xml=response.content)
         package_list = self._extract_package_list(primary=repodata["primary"])
         return Metadata(package_list=package_list, repodata=repodata, base_url=self.base_url)
 
@@ -143,7 +142,8 @@ class RPMRepository:
                 with gzip.open(local_path) as f:
                     return PackageList(base_url=self.base_url, packages_xml=f.read())
 
-    def parse_repomd(self, xml: Element) -> Dict[str, RepodataSection]:
+    def parse_repomd(self, xml: bytes) -> Dict[str, RepodataSection]:
+        xml = safe_parse_xml(xml)
         sections = {}
         for data_element in xml.findall(f"repo:data", namespaces=namespaces):
             section_type = data_element.attrib["type"]

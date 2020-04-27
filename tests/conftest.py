@@ -4,9 +4,28 @@ import os
 import pytest
 
 
-@pytest.fixture(name="test_package_list_xml")
-def test_package_list_xml():
+def load_resource_xml(filename):
     root_dir = os.path.dirname(os.path.abspath(__file__))
-    package_xml_path = os.path.join(root_dir, "resources", "primary.xml")
+    package_xml_path = os.path.join(root_dir, "resources", filename)
     with open(package_xml_path, "rb") as f:
         return f.read()
+
+
+PACKAGE_XML = load_resource_xml(filename="primary.xml")
+PACKAGE_CHANGED_XML = load_resource_xml(filename="primary-one-changed.xml")
+REPOMD_XML = load_resource_xml(filename="repomd.xml")
+
+
+@pytest.fixture(name="package_list_xml")
+def package_list_xml():
+    return PACKAGE_XML
+
+
+@pytest.fixture(name="package_list_changed_xml")
+def package_list_changed_xml():
+    return PACKAGE_CHANGED_XML
+
+
+@pytest.fixture(name="repomd_xml")
+def repomd_xml():
+    return REPOMD_XML
