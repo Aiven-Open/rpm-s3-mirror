@@ -99,5 +99,9 @@ class Mirror:
 
     def _build_s3_url(self, upstream_repository) -> str:
         dest_path = urlparse(upstream_repository.base_url).path
-        s3_mirror_url = f"https://{self.config.bucket_name}.s3-{self.config.bucket_region}.amazonaws.com{dest_path}"
+        # For some reason, s3 buckets in us-east-1 have a different URL structure to all the rest...
+        if self.config.bucket_region == "us-east-1":
+            s3_mirror_url = f"https://{self.config.bucket_name}.s3.amazonaws.com{dest_path}"
+        else:
+            s3_mirror_url = f"https://{self.config.bucket_name}.s3-{self.config.bucket_region}.amazonaws.com{dest_path}"
         return s3_mirror_url
