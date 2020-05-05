@@ -191,9 +191,15 @@ class RPMRepository:
                 open_size = len(file_bytes)
                 for package_element in primary_xml:
                     location = package_element.find("common:location", namespaces=namespaces)
+                    # As our S3 structure is https://<base-repo>/snapshots/<snapshot-uuid>/, and the "location"
+                    # attribute of the packages in primary.xml references a path relative to the root like:
+                    # "Packages/v/vim.rmp", we need to rewrite this location to point to back a few directories
+                    # from our snapshot root.
                     relative_location = f"../../{location.get('href')}"
                     location.set("href", relative_location)
 
+            # Now we have rewritten our XML file the checksums no longer match, so calculate some new ones (along with
+            # size etc from above).
             compressed_xml = gzip.compress(tostring(primary_xml))
             compressed_sha256 = sha256(compressed_xml)
             compressed_size = len(compressed_xml)
@@ -216,6 +222,8 @@ class RPMRepository:
             # We only support *.xml.gz files currently
             if element.attrib.get("type", None) not in {"primary", "filelists", "other"}:
                 repomd_xml.remove(element)
+
+        # Rewrite the XML with correct metadata for our changed primary.xml
         for element in repomd_xml.find(f"repo:data[@type='primary']", namespaces=namespaces):
             _, _, key = element.tag.partition("}")
             if key == "checksum":

@@ -12,7 +12,7 @@ from urllib.parse import urlparse
 from rpm_s3_mirror.repository import RPMRepository
 from rpm_s3_mirror.s3 import S3
 from rpm_s3_mirror.statsd import StatsClient
-from rpm_s3_mirror.util import get_requests_session, now, download_file
+from rpm_s3_mirror.util import get_requests_session, now
 
 Manifest = namedtuple("Manifest", ["update_time", "upstream_repository", "previous_repomd", "synced_packages"])
 MANIFEST_LOCATION = "manifests"
@@ -37,27 +37,46 @@ class Mirror:
 
     def snapshot(self):
         snapshot_id = uuid.uuid4()
+        self.log.debug("Creating snapshot: %s", snapshot_id)
         with TemporaryDirectory(prefix=self.config.scratch_dir) as temp_dir:
             for upstream_repository in self.repositories:
-                repository = RPMRepository(base_url=self._build_s3_url(upstream_repository))
-                snapshot = repository.create_snapshot(scratch_dir=temp_dir)
-
-                base_path = urlparse(repository.base_url).path[1:]  # need to strip the leading slash
-                for file_path in snapshot.sync_files:
-                    self.s3.copy_object(
-                        source=file_path,
-                        destination=self._snapshot_path(base_path, snapshot_id, file_path),
-                    )
-
-                for file_path in snapshot.upload_files:
-                    self.s3.put_object(
-                        local_path=file_path,
-                        key=self._snapshot_path(base_path, snapshot_id, file_path),
-                    )
+                try:
+                    self._snapshot_repository(snapshot_id, temp_dir, upstream_repository)
+                except Exception as e:
+                    self._try_remove_snapshots(snapshot_id=snapshot_id)
+                    raise Exception("Failed to snapshot repositories") from e
         return snapshot_id
 
+    def _snapshot_repository(self, snapshot_id, temp_dir, upstream_repository):
+        self.log.debug("Snapshotting repository: %s", upstream_repository.base_url)
+        repository = RPMRepository(base_url=self._build_s3_url(upstream_repository))
+        snapshot = repository.create_snapshot(scratch_dir=temp_dir)
+        base_path = urlparse(repository.base_url).path[1:]  # need to strip the leading slash
+        for file_path in snapshot.sync_files:
+            self.s3.copy_object(
+                source=file_path,
+                destination=self._snapshot_path(base_path, snapshot_id, file_path),
+            )
+        for file_path in snapshot.upload_files:
+            self.s3.put_object(
+                local_path=file_path,
+                key=self._snapshot_path(base_path, snapshot_id, file_path),
+            )
+
+    def _try_remove_snapshots(self, snapshot_id):
+        for repository in self.repositories:
+            snapshot_dir = self._snapshot_directory(base_path=repository.base_url, snapshot_id=snapshot_id)
+            try:
+                self.s3.delete_subdirectory(subdir=snapshot_dir)
+                self.log.debug("Deleted: %s", snapshot_dir)
+            except:  # pylint: disable=bare-except
+                self.log.warning("Failed to remove snapshot: %s", snapshot_dir)
+
     def _snapshot_path(self, base_path, snapshot_id, file_path):
-        return join(base_path, "snapshots", str(snapshot_id), "repodata", basename(file_path))
+        return join(self._snapshot_directory(base_path, snapshot_id), "repodata", basename(file_path))
+
+    def _snapshot_directory(self, base_path, snapshot_id):
+        return join(base_path, "snapshots", str(snapshot_id))
 
     def sync(self):
         start = time.monotonic()

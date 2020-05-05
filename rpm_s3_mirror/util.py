@@ -32,8 +32,7 @@ def get_requests_session() -> Session:
     return session
 
 
-def download_file(self, temp_dir: str, url: str, session: Session = None) -> str:
-    self.log.debug("GET: %s", url)
+def download_file(temp_dir: str, url: str, session: Session = None) -> str:
     session = session or get_requests_session()
     with session.get(url, stream=True) as request:
         request.raise_for_status()

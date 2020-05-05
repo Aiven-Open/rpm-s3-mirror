@@ -6,11 +6,9 @@ import hashlib
 import json
 import logging
 import os
-import shutil
 import threading
 from concurrent.futures.thread import ThreadPoolExecutor
 from datetime import datetime
-from os.path import join
 from tempfile import TemporaryDirectory, NamedTemporaryFile
 from typing import Collection, Union, BinaryIO, Dict, Iterable
 from urllib.parse import urlparse
@@ -18,7 +16,6 @@ from urllib.parse import urlparse
 import boto3
 import botocore.exceptions
 import time
-from requests import Session
 
 from rpm_s3_mirror.repository import RepodataSection, Package
 from rpm_s3_mirror.statsd import StatsClient
@@ -29,6 +26,12 @@ lock = threading.RLock()
 
 def md5_string(string):
     return hashlib.md5(string.encode("utf-8")).hexdigest()
+
+
+class S3DirectoryNotFound(Exception):
+    def __init__(self, response):
+        super().__init__()
+        self.response = response
 
 
 class S3:
@@ -155,6 +158,17 @@ class S3:
                 Body=package_fp,
                 ContentMD5=md5_header
             )
+
+    def delete_subdirectory(self, subdir):
+        response = self._client.list_objects_v2(Bucket=self.bucket_name, Prefix=subdir)
+        if response.get("KeyCount", 0) == 0:
+            raise S3DirectoryNotFound(response=response)
+
+        objects = []
+        for s3_object in response["Contents"]:
+            objects.append({"Key": s3_object["Key"], "VersionId": s3_object["VersionId"]})
+
+        self._client.delete_objects(Bucket=self.bucket_name, Delete={"Objects": objects, "Quiet": True})
 
     def copy_object(self, source, destination):
         source, destination = self._trim_key(source), self._trim_key(destination)
