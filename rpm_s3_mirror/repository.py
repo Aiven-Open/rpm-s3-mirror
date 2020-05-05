@@ -5,19 +5,19 @@ from datetime import datetime
 from typing import Iterator, Dict
 from urllib.parse import urlparse
 
-from lxml.etree import fromstring, Element  # pylint: disable=no-name-in-module
+from lxml.etree import fromstring, Element, tostring  # pylint: disable=no-name-in-module
 from lxml.etree import XMLParser  # pylint: disable=no-name-in-module
 from dateutil.parser import parse
 from tempfile import TemporaryDirectory
 import os
 import shutil
-from os.path import join
+from os.path import join, basename
 
 import gzip
 
 from requests import Response
 
-from rpm_s3_mirror.util import get_requests_session, validate_checksum
+from rpm_s3_mirror.util import get_requests_session, validate_checksum, sha256
 
 namespaces = {
     "common": "http://linux.duke.edu/metadata/common",
@@ -26,9 +26,9 @@ namespaces = {
 }
 
 
-def safe_parse_xml(xml_string: bytes) -> Element:
+def safe_parse_xml(xml_bytes: bytes) -> Element:
     safe_parser = XMLParser(resolve_entities=False)
-    return fromstring(xml_string, parser=safe_parser)
+    return fromstring(xml_bytes, parser=safe_parser)
 
 
 def download_repodata_section(section, request, destination_dir) -> str:
@@ -108,8 +108,31 @@ class PackageList:
             yield Package(base_url=self.base_url, destination_path=self.path, package_element=package_element)
 
 
-Metadata = namedtuple("Metadata", ["package_list", "repodata", "base_url"])
-RepodataSection = namedtuple("RepodataSection", ["url", "location", "destination", "checksum_type", "checksum"])
+Metadata = namedtuple("Metadata", [
+    "package_list",
+    "repodata",
+    "base_url",
+])
+RepodataSection = namedtuple("RepodataSection", [
+    "url",
+    "location",
+    "destination",
+    "checksum_type",
+    "checksum",
+])
+SnapshotPrimary = namedtuple(
+    "SnapshotPrimary", [
+        "open_checksum",
+        "checksum",
+        "checksum_type",
+        "size",
+        "open_size",
+        "local_path",
+        "location",
+    ]
+)
+
+Snapshot = namedtuple("Snapshot", ["sync_files", "upload_files"])
 
 
 class RPMRepository:
@@ -130,10 +153,81 @@ class RPMRepository:
         return parse(last_modified_header) > since
 
     def parse_metadata(self) -> Metadata:
-        response = self._req(self.session.get, "repodata/repomd.xml")
-        repodata = self.parse_repomd(xml=response.content)
+        repodata = self.get_repodata()
         package_list = self._extract_package_list(primary=repodata["primary"])
         return Metadata(package_list=package_list, repodata=repodata, base_url=self.base_url)
+
+    def get_repodata(self):
+        response = self._req(self.session.get, "repodata/repomd.xml")
+        repodata = self.parse_repomd(xml=safe_parse_xml(response.content))
+        return repodata
+
+    def create_snapshot(self, scratch_dir):
+        response = self._req(self.session.get, "repodata/repomd.xml")
+        repomd_xml = safe_parse_xml(response.content)
+        repodata = self.parse_repomd(xml=repomd_xml)
+        snapshot_primary = self._rewrite_primary(temp_dir=scratch_dir, primary=repodata["primary"])
+        self._rewrite_repomd(repomd_xml=repomd_xml, snapshot=snapshot_primary)
+        repomd_xml_path = join(scratch_dir, "repomd.xml")
+        with open(repomd_xml_path, "wb+") as out:
+            out.write(tostring(repomd_xml))
+
+        sync_files = []
+        for section in repodata.values():
+            if section.location.endswith(".xml.gz"):
+                sync_files.append(urlparse(join(self.base_url, section.location)).path)
+        return Snapshot(
+            sync_files=sync_files,
+            upload_files=[repomd_xml_path, snapshot_primary.local_path],
+        )
+
+    def _rewrite_primary(self, temp_dir, primary: RepodataSection):
+        with self._req(self.session.get, path=primary.location, stream=True) as request:
+            local_path = download_repodata_section(primary, request, temp_dir)
+            with gzip.open(local_path) as f:
+                file_bytes = f.read()
+                primary_xml = safe_parse_xml(xml_bytes=file_bytes)
+                open_checksum = sha256(content=file_bytes)
+                open_size = len(file_bytes)
+                for package_element in primary_xml:
+                    location = package_element.find("common:location", namespaces=namespaces)
+                    relative_location = f"../../{location.get('href')}"
+                    location.set("href", relative_location)
+
+            compressed_xml = gzip.compress(tostring(primary_xml))
+            compressed_sha256 = sha256(compressed_xml)
+            compressed_size = len(compressed_xml)
+            local_path = f"{temp_dir}/{compressed_sha256}-primary.xml.gz"
+            with open(local_path, "wb+") as out:
+                out.write(compressed_xml)
+
+            return SnapshotPrimary(
+                open_checksum=open_checksum,
+                checksum=compressed_sha256,
+                checksum_type="sha256",
+                size=compressed_size,
+                open_size=open_size,
+                local_path=local_path,
+                location=f"repodata/{basename(local_path)}"
+            )
+
+    def _rewrite_repomd(self, repomd_xml, snapshot: SnapshotPrimary):
+        for element in repomd_xml.findall(f"repo:*", namespaces=namespaces):
+            # We only support *.xml.gz files currently
+            if element.attrib.get("type", None) not in {"primary", "filelists", "other"}:
+                repomd_xml.remove(element)
+        for element in repomd_xml.find(f"repo:data[@type='primary']", namespaces=namespaces):
+            _, _, key = element.tag.partition("}")
+            if key == "checksum":
+                element.text = snapshot.checksum
+            elif key == "open-checksum":
+                element.text = snapshot.open_checksum
+            elif key == "location":
+                element.set("href", snapshot.location)
+            elif key == "size":
+                element.text = str(snapshot.size)
+            elif key == "open-size":
+                element.text = str(snapshot.open_size)
 
     def _extract_package_list(self, primary: RepodataSection) -> PackageList:
         with self._req(self.session.get, path=primary.location, stream=True) as request:
@@ -142,8 +236,7 @@ class RPMRepository:
                 with gzip.open(local_path) as f:
                     return PackageList(base_url=self.base_url, packages_xml=f.read())
 
-    def parse_repomd(self, xml: bytes) -> Dict[str, RepodataSection]:
-        xml = safe_parse_xml(xml)
+    def parse_repomd(self, xml: Element) -> Dict[str, RepodataSection]:
         sections = {}
         for data_element in xml.findall(f"repo:data", namespaces=namespaces):
             section_type = data_element.attrib["type"]

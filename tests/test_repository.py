@@ -1,6 +1,6 @@
 # Copyright (c) 2020 Aiven, Helsinki, Finland. https://aiven.io/
 
-from rpm_s3_mirror.repository import Package, PackageList, RPMRepository
+from rpm_s3_mirror.repository import Package, PackageList, RPMRepository, safe_parse_xml
 
 TEST_BASE_URL = "https://some.repo/some/path"
 CHANGED_PACKAGE_NAME = "GMT"
@@ -75,9 +75,10 @@ def test_package_equality(package_list_xml, package_list_changed_xml):
     package_list2 = list(PackageList(base_url=TEST_BASE_URL, packages_xml=package_list_changed_xml))
     assert package_list[1] == package_list2[1]
 
+
 def test_parse_repomd_xml(repomd_xml):
     repository = RPMRepository(base_url=TEST_BASE_URL)
-    repomd = repository.parse_repomd(repomd_xml)
+    repomd = repository.parse_repomd(safe_parse_xml(repomd_xml))
 
     assert list(repomd.keys()) == EXPECTED_REPOMD_KEYS
     assert {k: v.checksum for k, v in repomd.items()} == EXPECTED_REPOMD_CHECKSUMS

@@ -18,10 +18,11 @@ from urllib.parse import urlparse
 import boto3
 import botocore.exceptions
 import time
+from requests import Session
 
 from rpm_s3_mirror.repository import RepodataSection, Package
 from rpm_s3_mirror.statsd import StatsClient
-from rpm_s3_mirror.util import get_requests_session, validate_checksum
+from rpm_s3_mirror.util import get_requests_session, validate_checksum, download_file
 
 lock = threading.RLock()
 
@@ -69,10 +70,10 @@ class S3:
     def overwrite_repomd(self, base_url):
         with TemporaryDirectory(prefix=self.scratch_dir) as temp_dir:
             url = f"{base_url}repodata/repomd.xml"
-            repomd_xml = self._download_file(temp_dir, url)
+            repomd_xml = download_file(temp_dir=temp_dir, url=url, session=self.session)
             path = urlparse(url).path
             self.log.info("Overwriting repomd.xml")
-            self._put_object(repomd_xml, path, cache_age=0)
+            self.put_object(repomd_xml, path, cache_age=0)
 
     def archive_repomd(self, update_time, base_url, manifest_location):
         url = f"{base_url}repodata/repomd.xml"
@@ -83,7 +84,7 @@ class S3:
             filename="repomd.xml",
         )
         self.log.debug("Archiving repomd.xml to %s", archive_location)
-        self._copy_object(source=urlparse(url).path, destination=archive_location)
+        self.copy_object(source=urlparse(url).path, destination=archive_location)
         return archive_location
 
     def sync_identifier(self, base_url, manifest_location, update_time, filename):
@@ -103,7 +104,7 @@ class S3:
         with NamedTemporaryFile(prefix=self.scratch_dir) as f:
             f.write(manifest_json.encode("utf-8"))
             f.flush()
-            self._put_object(local_path=f.name, key=manifest_filename, cache_age=0)
+            self.put_object(local_path=f.name, key=manifest_filename, cache_age=0)
 
     def repomd_update_time(self, base_url: str) -> datetime:
         url = f"{base_url}repodata/repomd.xml"
@@ -126,24 +127,15 @@ class S3:
             self.log.debug("SKIP: %s", repo_object.destination)
             return
 
-        package_path = self._download_file(temp_dir=temp_dir, url=repo_object.url)
+        package_path = download_file(temp_dir=temp_dir, url=repo_object.url, session=self.session)
         validate_checksum(package_path, checksum_type=repo_object.checksum_type, checksum=repo_object.checksum)
-        self._put_object(package_path, repo_object.destination)
+        self.put_object(package_path, repo_object.destination)
         try:
             os.unlink(package_path)
         except Exception as e:  # pylint: disable=broad-except
             self.log.debug("Failed to unlink %s: %s", package_path, e)
 
-    def _download_file(self, temp_dir: str, url: str) -> str:
-        self.log.debug("GET: %s", url)
-        with self.session.get(url, stream=True) as request:
-            request.raise_for_status()
-            out_path = join(temp_dir, os.path.basename(url))
-            with open(out_path, "wb") as f:
-                shutil.copyfileobj(request.raw, f)
-            return out_path
-
-    def _put_object(self, local_path: str, key: str, cache_age=31536000):
+    def put_object(self, local_path: str, key: str, cache_age=31536000):
         with open(local_path, "rb") as package_fp:
             # We need to seek after this call so boto gets the file pointer at the beginning
             md5_header = self._build_md5_header(fp=package_fp)
@@ -164,14 +156,16 @@ class S3:
                 ContentMD5=md5_header
             )
 
-    def _copy_object(self, source, destination):
+    def copy_object(self, source, destination):
         source, destination = self._trim_key(source), self._trim_key(destination)
+        self.log.debug("COPY: %s -> %s", source, destination)
         self._client.copy_object(
             Bucket=self.bucket_name,
             CopySource={
                 "Bucket": self.bucket_name,
                 "Key": source,
             },
+            ACL="public-read",
             Key=destination,
             CacheControl="max-age=0"
         )
