@@ -1,6 +1,10 @@
 # Copyright (c) 2020 Aiven, Helsinki, Finland. https://aiven.io/
 
 import logging
+import uuid
+from os.path import basename, join
+from tempfile import TemporaryDirectory
+
 import time
 from collections import namedtuple
 from urllib.parse import urlparse
@@ -31,14 +35,14 @@ class Mirror:
         )
         self.repositories = [RPMRepository(base_url=url) for url in config.upstream_repositories]
 
-    def sync(self):
+    def sync(self, bootstrap):
         start = time.monotonic()
         for upstream_repository in self.repositories:
             mirror_start = time.monotonic()
             update_time = now()
             upstream_metadata = upstream_repository.parse_metadata()
 
-            if self.config.bootstrap:
+            if bootstrap:
                 self.log.info("Bootstrapping repository: %s", upstream_repository.base_url)
                 new_packages = upstream_metadata.package_list
             else:
@@ -66,11 +70,11 @@ class Mirror:
                     # we have completed bootstrapping and are just running a sync we don't benefit from checking as it
                     # slows things down for no good reason (we expect the packages to be there already and if not
                     # it is a bug of some kind).
-                    skip_existing=self.config.bootstrap
+                    skip_existing=bootstrap
                 )
 
                 # If we are not bootstrapping, store a manifest that describes the changes synced in this run
-                if not self.config.bootstrap:
+                if not bootstrap:
                     archive_location = self.s3.archive_repomd(
                         update_time=update_time,
                         base_url=upstream_repository.base_url,
@@ -96,6 +100,53 @@ class Mirror:
 
         self.log.info("Synced %s repos in %s seconds", len(self.repositories), time.monotonic() - start)
         self.stats.gauge(metric="s3_mirror_sync_seconds_total", value=time.monotonic() - start)
+
+    def snapshot(self):
+        snapshot_id = uuid.uuid4()
+        self.log.debug("Creating snapshot: %s", snapshot_id)
+        with TemporaryDirectory(prefix=self.config.scratch_dir) as temp_dir:
+            for upstream_repository in self.repositories:
+                try:
+                    self._snapshot_repository(
+                        snapshot_id=snapshot_id,
+                        temp_dir=temp_dir,
+                        upstream_repository=upstream_repository,
+                    )
+                except Exception as e:
+                    self._try_remove_snapshots(snapshot_id=snapshot_id)
+                    raise Exception("Failed to snapshot repositories") from e
+        return snapshot_id
+
+    def _snapshot_repository(self, snapshot_id, temp_dir, upstream_repository):
+        self.log.debug("Snapshotting repository: %s", upstream_repository.base_url)
+        repository = RPMRepository(base_url=self._build_s3_url(upstream_repository))
+        snapshot = repository.create_snapshot(scratch_dir=temp_dir)
+        base_path = urlparse(repository.base_url).path[1:]  # need to strip the leading slash
+        for file_path in snapshot.sync_files:
+            self.s3.copy_object(
+                source=file_path,
+                destination=self._snapshot_path(base_path, snapshot_id, file_path),
+            )
+        for file_path in snapshot.upload_files:
+            self.s3.put_object(
+                local_path=file_path,
+                key=self._snapshot_path(base_path, snapshot_id, file_path),
+            )
+
+    def _try_remove_snapshots(self, snapshot_id):
+        for repository in self.repositories:
+            snapshot_dir = self._snapshot_directory(base_path=repository.base_url, snapshot_id=snapshot_id)
+            try:
+                self.s3.delete_subdirectory(subdir=snapshot_dir)
+                self.log.debug("Deleted: %s", snapshot_dir)
+            except:  # pylint: disable=bare-except
+                self.log.warning("Failed to remove snapshot: %s", snapshot_dir)
+
+    def _snapshot_path(self, base_path, snapshot_id, file_path):
+        return join(self._snapshot_directory(base_path, snapshot_id), "repodata", basename(file_path))
+
+    def _snapshot_directory(self, base_path, snapshot_id):
+        return join(base_path, "snapshots", str(snapshot_id))
 
     def _build_s3_url(self, upstream_repository) -> str:
         dest_path = urlparse(upstream_repository.base_url).path

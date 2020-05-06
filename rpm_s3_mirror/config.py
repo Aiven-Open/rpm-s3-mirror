@@ -16,7 +16,6 @@ REQUIRED = {
 DEFAULTS = {
     "scratch_dir": "/var/tmp/",
     "max_workers": 4,
-    "bootstrap": False,
 }
 
 
@@ -32,7 +31,6 @@ class Config:
     scratch_dir = None
     max_workers = None
     upstream_repositories = None
-    bootstrap = None
     _config = DEFAULTS
 
     def __init__(self):
@@ -69,8 +67,6 @@ class ENVConfig(Config):
                 value = value.split(",")
             elif key == "max_workers":
                 value = int(value)
-            elif key == "bootstrap":
-                value = value.lower() == "true"
             self._config[key] = value
 
 
