@@ -78,3 +78,12 @@ class JSONConfig(Config):
     def _populate_required(self):
         with open(self.path) as f:
             self._config.update(json.load(f))
+
+
+class DictConfig(Config):
+    def __init__(self, config_dict):
+        self._config.update(config_dict)
+        super().__init__()
+
+    def _populate_required(self):
+        pass
