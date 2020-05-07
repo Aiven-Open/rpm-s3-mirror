@@ -35,7 +35,7 @@ class Mirror:
         )
         self.repositories = [RPMRepository(base_url=url) for url in config.upstream_repositories]
 
-    def sync(self, bootstrap):
+    def sync(self, bootstrap=False):
         start = time.monotonic()
         for upstream_repository in self.repositories:
             mirror_start = time.monotonic()
