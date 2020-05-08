@@ -1,7 +1,7 @@
 short_ver = 0.0.1
 long_ver = $(shell git describe --long 2>/dev/null || echo $(short_ver)-0-unknown-g`git describe --always`)
 
-all: 
+all:
 
 PYTHON ?= python3
 PYTHON_SOURCE_DIRS = rpm_s3_mirror/ tests/
@@ -28,7 +28,7 @@ build-dep-fed:
 		python3-boto3 \
 		python3-lxml
 
-test: copyright pylint unittest
+test: copyright lint unittest
 
 reformat:
 	yapf --parallel --recursive --in-place tests/ rpm_s3_mirror/
@@ -46,9 +46,11 @@ coverage:
 	$(PYTHON) -m coverage report --show-missing
 
 pylint:
-	$(PYTHON) -m pylint.lint --rcfile .pylintrc $(PYTHON_SOURCE_DIRS)
+	pylint --rcfile .pylintrc $(PYTHON_SOURCE_DIRS)
 
 flake8:
 	$(PYTHON) -m flake8 --exclude=__init__.py --ignore=E722 --max-line-len=125 $(PYTHON_SOURCE_DIRS)
+
+lint: pylint flake8
 
 .PHONY: rpm

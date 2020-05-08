@@ -218,13 +218,13 @@ class RPMRepository:
             )
 
     def _rewrite_repomd(self, repomd_xml, snapshot: SnapshotPrimary):
-        for element in repomd_xml.findall(f"repo:*", namespaces=namespaces):
+        for element in repomd_xml.findall("repo:*", namespaces=namespaces):
             # We only support *.xml.gz files currently
             if element.attrib.get("type", None) not in {"primary", "filelists", "other"}:
                 repomd_xml.remove(element)
 
         # Rewrite the XML with correct metadata for our changed primary.xml
-        for element in repomd_xml.find(f"repo:data[@type='primary']", namespaces=namespaces):
+        for element in repomd_xml.find("repo:data[@type='primary']", namespaces=namespaces):
             _, _, key = element.tag.partition("}")
             if key == "checksum":
                 element.text = snapshot.checksum
@@ -246,7 +246,7 @@ class RPMRepository:
 
     def parse_repomd(self, xml: Element) -> Dict[str, RepodataSection]:
         sections = {}
-        for data_element in xml.findall(f"repo:data", namespaces=namespaces):
+        for data_element in xml.findall("repo:data", namespaces=namespaces):
             section_type = data_element.attrib["type"]
             section = {}
             for element in xml.findall(f"repo:data[@type='{section_type}']/repo:*", namespaces=namespaces):
