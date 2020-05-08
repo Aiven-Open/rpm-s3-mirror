@@ -150,10 +150,12 @@ class S3:
                 ACL="public-read",
                 Bucket=self.bucket_name,
                 CacheControl=f"max-age={cache_age}",
-                # S3 is not very nice and cannot handle the "+" sign in filenames (https://forums.aws.amazon.com/thread.jspa?threadID=55746).
-                # Everything works fine when uploading but when you attempt to retrieve the file it is urlencoded to %2B, which of course
-                # breaks DNF as it doesn't try to decode the URL when retrieving the file. We can hack around this problem by replacing the "+"
-                # character with a space as S3 interprets that as a "+" sign on retrieval :(
+                # S3 is not very nice and cannot handle the "+" sign in filenames
+                # (https://forums.aws.amazon.com/thread.jspa?threadID=55746).
+                # Everything works fine when uploading but when you attempt to retrieve the file # it is urlencoded to %2B,
+                # which of course breaks DNF as it doesn't try to decode the URL when retrieving the file.
+                # We can hack around this problem by replacing the "+" character with a space as
+                # S3 interprets that as a "+" sign on retrieval :(
                 Key=key.replace("+", " "),
                 Body=package_fp,
                 ContentMD5=md5_header
