@@ -2,6 +2,7 @@
 
 import os
 import pytest
+from rpm_s3_mirror.config import DictConfig
 
 
 def load_resource_xml(filename):
@@ -29,3 +30,16 @@ def package_list_changed_xml():
 @pytest.fixture(name="repomd_xml")
 def repomd_xml():
     return REPOMD_XML
+
+
+@pytest.fixture(name="mirror_config")
+def mirror_config():
+    return DictConfig(
+        config_dict={
+            "aws_access_key_id": "***",
+            "aws_secret_access_key": "***",
+            "bucket_name": "some-bucket",
+            "bucket_region": "ap-southeast-2",
+            "upstream_repositories": ["https://someupstreamrepo/os"]
+        }
+    )

@@ -2,13 +2,12 @@
 
 import logging
 import re
+from contextlib import suppress
 from tempfile import TemporaryDirectory
 
 import time
 from collections import namedtuple
 from urllib.parse import urlparse
-
-from importlib_metadata import suppress
 
 from rpm_s3_mirror.repository import RPMRepository
 from rpm_s3_mirror.s3 import S3, S3DirectoryNotFound
@@ -126,6 +125,8 @@ class Mirror:
     def _validate_snapshot_id(self, snapshot_id):
         if not re.match(VALID_SNAPSHOT_REGEX, snapshot_id):
             raise InvalidSnapshotID(f"Snapshot id must match regex: {VALID_SNAPSHOT_REGEX}")
+        elif "\n" in snapshot_id:
+            raise InvalidSnapshotID("Snapshot id cannot contain newlines")
         for repository in self.repositories:
             base_path = repository.path[1:]
             snapshot_dir = get_snapshot_directory(base_path=base_path, snapshot_id=snapshot_id)
