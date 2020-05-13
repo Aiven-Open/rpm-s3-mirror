@@ -162,15 +162,23 @@ class S3:
             )
 
     def delete_subdirectory(self, subdir):
-        response = self._client.list_objects_v2(Bucket=self.bucket_name, Prefix=subdir)
+        objects = []
+        for s3_object in self.list(subdir):
+            objects.append({"Key": s3_object["Key"]})
+        self._client.delete_objects(Bucket=self.bucket_name, Delete={"Objects": objects, "Quiet": True})
+
+    def exists(self, prefix):
+        try:
+            self.list(prefix)
+        except S3DirectoryNotFound:
+            return False
+        return True
+
+    def list(self, prefix):
+        response = self._client.list_objects_v2(Bucket=self.bucket_name, Prefix=prefix)
         if response.get("KeyCount", 0) == 0:
             raise S3DirectoryNotFound(response=response)
-
-        objects = []
-        for s3_object in response["Contents"]:
-            objects.append({"Key": s3_object["Key"], "VersionId": s3_object["VersionId"]})
-
-        self._client.delete_objects(Bucket=self.bucket_name, Delete={"Objects": objects, "Quiet": True})
+        return response["Contents"]
 
     def copy_object(self, source, destination):
         source, destination = self._trim_key(source), self._trim_key(destination)

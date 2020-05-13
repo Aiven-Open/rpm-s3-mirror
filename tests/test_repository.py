@@ -1,4 +1,5 @@
 # Copyright (c) 2020 Aiven, Helsinki, Finland. https://aiven.io/
+import pytest
 
 from rpm_s3_mirror.repository import Package, PackageList, RPMRepository, safe_parse_xml
 
@@ -85,3 +86,8 @@ def test_parse_repomd_xml(repomd_xml):
 
     for repodata_section in repomd.values():
         assert all(attr is not None for attr in repodata_section._asdict().values())
+
+
+def test_reject_http_upstream_repository():
+    with pytest.raises(ValueError):
+        RPMRepository(base_url="http://dangerdanger")

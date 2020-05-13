@@ -1,8 +1,8 @@
 # Copyright (c) 2020 Aiven, Helsinki, Finland. https://aiven.io/
 
 import logging
-import uuid
-from os.path import basename, join
+import re
+from contextlib import suppress
 from tempfile import TemporaryDirectory
 
 import time
@@ -10,12 +10,18 @@ from collections import namedtuple
 from urllib.parse import urlparse
 
 from rpm_s3_mirror.repository import RPMRepository
-from rpm_s3_mirror.s3 import S3
+from rpm_s3_mirror.s3 import S3, S3DirectoryNotFound
 from rpm_s3_mirror.statsd import StatsClient
-from rpm_s3_mirror.util import get_requests_session, now
+from rpm_s3_mirror.util import get_requests_session, now, get_snapshot_directory, get_snapshot_path
 
 Manifest = namedtuple("Manifest", ["update_time", "upstream_repository", "previous_repomd", "synced_packages"])
 MANIFEST_LOCATION = "manifests"
+
+VALID_SNAPSHOT_REGEX = r"^[A-Za-z0-9_-]+$"
+
+
+class InvalidSnapshotID(ValueError):
+    pass
 
 
 class Mirror:
@@ -101,9 +107,9 @@ class Mirror:
         self.log.info("Synced %s repos in %s seconds", len(self.repositories), time.monotonic() - start)
         self.stats.gauge(metric="s3_mirror_sync_seconds_total", value=time.monotonic() - start)
 
-    def snapshot(self):
-        snapshot_id = uuid.uuid4()
-        self.log.debug("Creating snapshot: %s", snapshot_id)
+    def snapshot(self, snapshot_id):
+        self.log.info("Creating snapshot: %s", snapshot_id)
+        self._validate_snapshot_id(snapshot_id)
         with TemporaryDirectory(prefix=self.config.scratch_dir) as temp_dir:
             for upstream_repository in self.repositories:
                 try:
@@ -115,7 +121,17 @@ class Mirror:
                 except Exception as e:
                     self._try_remove_snapshots(snapshot_id=snapshot_id)
                     raise Exception("Failed to snapshot repositories") from e
-        return snapshot_id
+
+    def _validate_snapshot_id(self, snapshot_id):
+        if not re.match(VALID_SNAPSHOT_REGEX, snapshot_id):
+            raise InvalidSnapshotID(f"Snapshot id must match regex: {VALID_SNAPSHOT_REGEX}")
+        elif "\n" in snapshot_id:
+            raise InvalidSnapshotID("Snapshot id cannot contain newlines")
+        for repository in self.repositories:
+            base_path = repository.path[1:]
+            snapshot_dir = get_snapshot_directory(base_path=base_path, snapshot_id=snapshot_id)
+            if self.s3.exists(prefix=snapshot_dir):
+                raise InvalidSnapshotID(f"Cannot overwrite existing snapshot: {snapshot_dir}")
 
     def _snapshot_repository(self, snapshot_id, temp_dir, upstream_repository):
         self.log.debug("Snapshotting repository: %s", upstream_repository.base_url)
@@ -125,28 +141,23 @@ class Mirror:
         for file_path in snapshot.sync_files:
             self.s3.copy_object(
                 source=file_path,
-                destination=self._snapshot_path(base_path, snapshot_id, file_path),
+                destination=get_snapshot_path(base_path, snapshot_id, file_path),
             )
         for file_path in snapshot.upload_files:
             self.s3.put_object(
                 local_path=file_path,
-                key=self._snapshot_path(base_path, snapshot_id, file_path),
+                key=get_snapshot_path(base_path, snapshot_id, file_path),
             )
 
     def _try_remove_snapshots(self, snapshot_id):
         for repository in self.repositories:
-            snapshot_dir = self._snapshot_directory(base_path=repository.base_url, snapshot_id=snapshot_id)
+            snapshot_dir = get_snapshot_directory(base_path=repository.path, snapshot_id=snapshot_id)
             try:
-                self.s3.delete_subdirectory(subdir=snapshot_dir)
-                self.log.debug("Deleted: %s", snapshot_dir)
-            except:  # pylint: disable=bare-except
-                self.log.warning("Failed to remove snapshot: %s", snapshot_dir)
-
-    def _snapshot_path(self, base_path, snapshot_id, file_path):
-        return join(self._snapshot_directory(base_path, snapshot_id), "repodata", basename(file_path))
-
-    def _snapshot_directory(self, base_path, snapshot_id):
-        return join(base_path, "snapshots", str(snapshot_id))
+                with suppress(S3DirectoryNotFound):
+                    self.s3.delete_subdirectory(subdir=snapshot_dir)
+                    self.log.info("Deleted: %s", snapshot_dir)
+            except Exception as e:  # pylint: disable=broad-except
+                self.log.warning("Failed to remove snapshot: %s - %s", snapshot_dir, e)
 
     def _build_s3_url(self, upstream_repository) -> str:
         dest_path = urlparse(upstream_repository.base_url).path

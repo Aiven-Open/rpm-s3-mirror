@@ -4,7 +4,7 @@ import datetime
 import hashlib
 import os
 import shutil
-from os.path import join
+from os.path import join, basename
 
 import requests
 from requests import Session
@@ -45,3 +45,11 @@ def download_file(temp_dir: str, url: str, session: Session = None) -> str:
 def now() -> datetime.datetime:
     current_time = datetime.datetime.now(datetime.timezone.utc)
     return current_time.replace(microsecond=0)
+
+
+def get_snapshot_path(base_path, snapshot_id, file_path):
+    return join(get_snapshot_directory(base_path, snapshot_id), "repodata", basename(file_path))
+
+
+def get_snapshot_directory(base_path, snapshot_id):
+    return join(base_path, "snapshots", snapshot_id)

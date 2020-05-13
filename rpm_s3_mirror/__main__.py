@@ -22,10 +22,7 @@ def main():
 
     operation_group = parser.add_mutually_exclusive_group(required=False)
     operation_group.add_argument(
-        "--snapshot",
-        help="Create a snapshot of current repository state",
-        action="store_true",
-        default=False,
+        "--snapshot", help="Create a named snapshot of current repository state", default=False, type=str
     )
     operation_group.add_argument(
         "--bootstrap",
@@ -50,7 +47,7 @@ def main():
 
     mirror = Mirror(config=config)
     if args.snapshot:
-        mirror.snapshot()
+        mirror.snapshot(snapshot_id=args.snapshot)
     else:
         mirror.sync(bootstrap=args.bootstrap)
 

@@ -174,7 +174,9 @@ class RPMRepository:
 
         sync_files = []
         for section in repodata.values():
-            if section.location.endswith(".xml.gz"):
+            if section.location.endswith(".xml.gz") \
+                    or section.location.endswith("updateinfo.xml.xz") \
+                    or section.location.endswith("modules.yaml.gz"):
                 sync_files.append(urlparse(join(self.base_url, section.location)).path)
         return Snapshot(
             sync_files=sync_files,
@@ -220,7 +222,7 @@ class RPMRepository:
     def _rewrite_repomd(self, repomd_xml, snapshot: SnapshotPrimary):
         for element in repomd_xml.findall("repo:*", namespaces=namespaces):
             # We only support *.xml.gz files currently
-            if element.attrib.get("type", None) not in {"primary", "filelists", "other"}:
+            if element.attrib.get("type", None) not in {"primary", "filelists", "other", "modules", "updateinfo"}:
                 repomd_xml.remove(element)
 
         # Rewrite the XML with correct metadata for our changed primary.xml
