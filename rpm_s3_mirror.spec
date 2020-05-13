@@ -7,6 +7,10 @@ BuildArch:      noarch
 License:        ASL 2.0
 Source0:        rpm_s3_mirror-rpm-src.tar
 BuildRequires:  python3-pytest
+BuildRequires:  python3-pylint
+BuildRequires:  python3-pylint-quotes
+BuildRequires:  python3-typed_ast
+BuildRequires:  python3-flake8
 BuildRequires:  python3-yapf
 BuildRequires:  rpm-build
 Requires:       python3-defusedxml
