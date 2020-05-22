@@ -25,6 +25,9 @@ def main():
         "--snapshot", help="Create a named snapshot of current repository state", default=False, type=str
     )
     operation_group.add_argument(
+        "--sync-snapshot", help="Sync snapshot metadata from one s3 mirror to another", default=False, type=str
+    )
+    operation_group.add_argument(
         "--bootstrap",
         help="Bootstrap an empty s3 mirror",
         action="store_true",
@@ -48,6 +51,8 @@ def main():
     mirror = Mirror(config=config)
     if args.snapshot:
         mirror.snapshot(snapshot_id=args.snapshot)
+    elif args.sync_snapshot:
+        mirror.sync_snapshot(snapshot_id=args.sync_snapshot)
     else:
         mirror.sync(bootstrap=args.bootstrap)
 
