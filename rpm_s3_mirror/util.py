@@ -42,8 +42,10 @@ def download_file(temp_dir: str, url: str, session: Session = None) -> str:
         return out_path
 
 
-def now() -> datetime.datetime:
+def now(*, microsecond=False) -> datetime.datetime:
     current_time = datetime.datetime.now(datetime.timezone.utc)
+    if microsecond:
+        return current_time
     return current_time.replace(microsecond=0)
 
 

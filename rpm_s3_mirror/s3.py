@@ -78,36 +78,18 @@ class S3:
             self.log.info("Overwriting repomd.xml")
             self.put_object(repomd_xml, path, cache_age=0)
 
-    def archive_repomd(self, update_time, base_url, manifest_location):
+    def archive_repomd(self, base_url, location):
+        self.log.debug("Archiving repomd.xml to %s", location)
         url = f"{base_url}repodata/repomd.xml"
-        archive_location = self.sync_identifier(
-            base_url=base_url,
-            manifest_location=manifest_location,
-            update_time=update_time,
-            filename="repomd.xml",
-        )
-        self.log.debug("Archiving repomd.xml to %s", archive_location)
-        self.copy_object(source=urlparse(url).path, destination=archive_location)
-        return archive_location
+        self.copy_object(source=urlparse(url).path, destination=location)
 
-    def sync_identifier(self, base_url, manifest_location, update_time, filename):
-        repo_hash = md5_string(base_url)
-        timestamp = update_time.strftime("%Y-%m-%d:%H:%M")
-        identifier = f"{manifest_location}/{repo_hash}-{timestamp}-{filename}"
-        return identifier
-
-    def put_manifest(self, manifest_location, manifest):
-        manifest_filename = self.sync_identifier(
-            base_url=manifest.upstream_repository,
-            manifest_location=manifest_location,
-            update_time=manifest.update_time,
-            filename="manifest.json",
-        )
+    def put_manifest(self, location, manifest):
+        self.log.info("Writing manifest to: %s", location)
         manifest_json = json.dumps(manifest._asdict(), default=lambda x: x.isoformat(), indent=2)
         with NamedTemporaryFile(prefix=self.scratch_dir) as f:
             f.write(manifest_json.encode("utf-8"))
             f.flush()
-            self.put_object(local_path=f.name, key=manifest_filename, cache_age=0)
+            self.put_object(local_path=f.name, key=location)
 
     def repomd_update_time(self, base_url: str) -> datetime:
         url = f"{base_url}repodata/repomd.xml"
