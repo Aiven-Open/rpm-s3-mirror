@@ -17,7 +17,7 @@ from rpm_s3_mirror.util import get_requests_session, now, get_snapshot_directory
     validate_checksum
 
 Manifest = namedtuple("Manifest", ["update_time", "upstream_repository", "previous_repomd", "synced_packages"])
-MANIFEST_LOCATION = "manifests"
+MANIFEST_DIRECTORY = "manifests"
 
 VALID_SNAPSHOT_REGEX = r"^[A-Za-z0-9_-]+$"
 
@@ -84,18 +84,17 @@ class Mirror:
 
                 # If we are not bootstrapping, store a manifest that describes the changes synced in this run
                 if not bootstrap:
-                    archive_location = self.s3.archive_repomd(
-                        update_time=update_time,
-                        base_url=upstream_repository.base_url,
-                        manifest_location=MANIFEST_LOCATION,
-                    )
+                    manifest_location = self._build_manifest_location(base_url=upstream_repository.base_url)
+                    repomd_path = join(manifest_location, "repomd.xml")
+                    self.s3.archive_repomd(base_url=upstream_repository.base_url, location=repomd_path)
                     manifest = Manifest(
                         update_time=update_time,
                         upstream_repository=upstream_repository.base_url,
-                        previous_repomd=archive_location,
+                        previous_repomd=repomd_path,
                         synced_packages=[package.to_dict() for package in new_packages],
                     )
-                    self.s3.put_manifest(manifest_location=MANIFEST_LOCATION, manifest=manifest)
+                    manifest_path = join(manifest_location, "manifest.json")
+                    self.s3.put_manifest(location=manifest_path, manifest=manifest)
 
                 # Finally, overwrite the repomd.xml file to make our changes live
                 self.s3.overwrite_repomd(base_url=upstream_repository.base_url)
@@ -109,6 +108,11 @@ class Mirror:
 
         self.log.info("Synced %s repos in %s seconds", len(self.repositories), time.monotonic() - start)
         self.stats.gauge(metric="s3_mirror_sync_seconds_total", value=time.monotonic() - start)
+
+    def _build_manifest_location(self, base_url):
+        sync_directory = now(microsecond=True).replace(tzinfo=None).isoformat()
+        manifest_location = join(urlparse(base_url).path, MANIFEST_DIRECTORY, sync_directory)
+        return manifest_location
 
     def snapshot(self, snapshot_id):
         """ Create a named snapshot of upstream repositories at a point in time """
