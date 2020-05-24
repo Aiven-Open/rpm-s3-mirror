@@ -3,16 +3,18 @@
 import logging
 import re
 from contextlib import suppress
+from os.path import join
 from tempfile import TemporaryDirectory
 
 import time
 from collections import namedtuple
 from urllib.parse import urlparse
 
-from rpm_s3_mirror.repository import RPMRepository
+from rpm_s3_mirror.repository import RPMRepository, safe_parse_xml
 from rpm_s3_mirror.s3 import S3, S3DirectoryNotFound
 from rpm_s3_mirror.statsd import StatsClient
-from rpm_s3_mirror.util import get_requests_session, now, get_snapshot_directory, get_snapshot_path
+from rpm_s3_mirror.util import get_requests_session, now, get_snapshot_directory, get_snapshot_path, download_file, \
+    validate_checksum
 
 Manifest = namedtuple("Manifest", ["update_time", "upstream_repository", "previous_repomd", "synced_packages"])
 MANIFEST_LOCATION = "manifests"
@@ -42,6 +44,7 @@ class Mirror:
         self.repositories = [RPMRepository(base_url=url) for url in config.upstream_repositories]
 
     def sync(self, bootstrap=False):
+        """ Sync upstream repositories to our s3 mirror """
         start = time.monotonic()
         for upstream_repository in self.repositories:
             mirror_start = time.monotonic()
@@ -108,6 +111,7 @@ class Mirror:
         self.stats.gauge(metric="s3_mirror_sync_seconds_total", value=time.monotonic() - start)
 
     def snapshot(self, snapshot_id):
+        """ Create a named snapshot of upstream repositories at a point in time """
         self.log.info("Creating snapshot: %s", snapshot_id)
         self._validate_snapshot_id(snapshot_id)
         with TemporaryDirectory(prefix=self.config.scratch_dir) as temp_dir:
@@ -121,6 +125,30 @@ class Mirror:
                 except Exception as e:
                     self._try_remove_snapshots(snapshot_id=snapshot_id)
                     raise Exception("Failed to snapshot repositories") from e
+
+    def sync_snapshot(self, snapshot_id):
+        """ Sync a snapshot from one s3 mirror to another """
+        self.log.info("Syncing snapshot: %s", snapshot_id)
+        self._validate_snapshot_id(snapshot_id)
+        for upstream_repo in self.config.upstream_repositories:
+            snapshot_root = join(upstream_repo, "snapshots", snapshot_id)
+            metadata_url = join(snapshot_root, "repodata", "repomd.xml")
+            with TemporaryDirectory(prefix=self.config.scratch_dir) as temp_dir:
+                snapshot_path = urlparse(snapshot_root).path
+                repomd_path = download_file(temp_dir=temp_dir, url=metadata_url, session=self.session)
+                with open(repomd_path, "rb") as f:
+                    repomd_xml = safe_parse_xml(xml_bytes=f.read())
+
+                repository = RPMRepository(base_url=snapshot_root)
+                repodata = repository.parse_repomd(xml=repomd_xml)
+                for repo_object in repodata.values():
+                    local_path = download_file(temp_dir=temp_dir, url=repo_object.url, session=self.session)
+                    validate_checksum(local_path, checksum_type=repo_object.checksum_type, checksum=repo_object.checksum)
+                    destination = join(snapshot_path, repo_object.location)
+                    self.s3.put_object(local_path=local_path, key=destination)
+
+                repomd_destination = join(snapshot_path, "repodata", "repomd.xml")
+                self.s3.put_object(local_path=local_path, key=repomd_destination)
 
     def _validate_snapshot_id(self, snapshot_id):
         if not re.match(VALID_SNAPSHOT_REGEX, snapshot_id):
