@@ -108,13 +108,28 @@ class S3:
         self.log.info("Completed syncing %s objects in %s seconds", len(repo_objects), elapsed)
 
     def _sync_object(self, temp_dir: str, skip_existing: bool, repo_object: Union[Package, RepodataSection]):
-        if skip_existing and self._object_exists(repo_object.destination):
-            self.log.debug("SKIP: %s", repo_object.destination)
-            return
+        # When bootstrapping, support backfilling two versions of problematic packages (see below)
+        workaround_destination = repo_object.destination.replace("+", " ")
+        if skip_existing:
+            if ("+" in repo_object.destination and self._object_exists(workaround_destination)) \
+                    and self._object_exists(repo_object.destination):
+                self.log.debug("SKIP: %s", repo_object.destination)
+                return
 
         package_path = download_file(temp_dir=temp_dir, url=repo_object.url, session=self.session)
         validate_checksum(package_path, checksum_type=repo_object.checksum_type, checksum=repo_object.checksum)
         self.put_object(package_path, repo_object.destination)
+        if "+" in repo_object.destination:
+            # Old versions of DNF did not urlencode plus signs in urls, and s3 always does
+            # so we need to upload two versions of these packages, one with the + sign unmodified
+            # for newer versions of DNF, and one with the + sign replaced with a space for older
+            # versions as s3 interprets a space as a + sign.
+            # https://bugzilla.redhat.com/show_bug.cgi?id=1817130
+            # https://forums.aws.amazon.com/thread.jspa?threadID=55746
+            self.log.debug(
+                "Uploading workaround version of package: %s -> %s", repo_object.destination, workaround_destination
+            )
+            self.put_object(package_path, key=workaround_destination)
         try:
             os.unlink(package_path)
         except Exception as e:  # pylint: disable=broad-except
@@ -132,13 +147,7 @@ class S3:
                 ACL="public-read",
                 Bucket=self.bucket_name,
                 CacheControl=f"max-age={cache_age}",
-                # S3 is not very nice and cannot handle the "+" sign in filenames
-                # (https://forums.aws.amazon.com/thread.jspa?threadID=55746).
-                # Everything works fine when uploading but when you attempt to retrieve the file # it is urlencoded to %2B,
-                # which of course breaks DNF as it doesn't try to decode the URL when retrieving the file.
-                # We can hack around this problem by replacing the "+" character with a space as
-                # S3 interprets that as a "+" sign on retrieval :(
-                Key=key.replace("+", " "),
+                Key=key,
                 Body=package_fp,
                 ContentMD5=md5_header
             )
