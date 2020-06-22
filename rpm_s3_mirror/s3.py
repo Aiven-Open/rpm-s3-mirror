@@ -66,8 +66,16 @@ class S3:
         with TemporaryDirectory(prefix=self.scratch_dir) as temp_dir:
             self._sync_objects(temp_dir, upstream_packages, skip_existing=skip_existing)
             synced_bytes = sum((package.package_size for package in upstream_packages))
-            self.stats.gauge(metric="s3_mirror_sync_bytes", value=synced_bytes, tags={"repo": base_url})
-            self.stats.gauge(metric="s3_mirror_sync_packages", value=len(upstream_packages), tags={"repo": base_url})
+            self.stats.gauge(
+                metric="s3_mirror_sync_bytes",
+                value=synced_bytes,
+                tags={"repo": urlparse(base_url).path},
+            )
+            self.stats.gauge(
+                metric="s3_mirror_sync_packages",
+                value=len(upstream_packages),
+                tags={"repo": urlparse(base_url).path},
+            )
             self._sync_objects(temp_dir=temp_dir, repo_objects=upstream_repodata.values(), skip_existing=skip_existing)
 
     def overwrite_repomd(self, base_url):
