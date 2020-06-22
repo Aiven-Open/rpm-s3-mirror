@@ -2,6 +2,9 @@
 
 import argparse
 import logging
+from time import sleep
+
+import sys
 
 from rpm_s3_mirror.config import JSONConfig, ENVConfig
 from rpm_s3_mirror.mirror import Mirror
@@ -9,6 +12,12 @@ from rpm_s3_mirror.mirror import Mirror
 logging.getLogger("boto").setLevel(logging.WARNING)
 logging.getLogger("botocore").setLevel(logging.WARNING)
 logging.getLogger("urllib3").setLevel(logging.WARNING)
+
+
+def run_forever(mirror, poll_seconds):
+    while True:
+        mirror.sync(bootstrap=False)
+        sleep(poll_seconds)
 
 
 def main():
@@ -33,11 +42,21 @@ def main():
         action="store_true",
         default=False,
     )
+
     config_group = parser.add_mutually_exclusive_group(required=True)
     config_group.add_argument("--config", help="Path to config file")
     config_group.add_argument("--env", help="Read configuration from environment variables", action="store_true")
+    parser.add_argument(
+        "--poll-seconds",
+        help="Instead of running once and exiting, poll the mirrors every this many seconds",
+        type=int,
+    )
 
     args = parser.parse_args()
+    if args.poll_seconds and (args.snapshot or args.sync_snapshot or args.bootstrap):
+        print("--poll-seconds and [--snapshot|--sync-snapshot|--bootstrap] are mutually exclusive", file=sys.stderr)
+        sys.exit(1)
+
     if args.config:
         config = JSONConfig(path=args.config)
     elif args.env:
@@ -54,7 +73,11 @@ def main():
     elif args.sync_snapshot:
         mirror.sync_snapshot(snapshot_id=args.sync_snapshot)
     else:
-        mirror.sync(bootstrap=args.bootstrap)
+        if args.poll_seconds:
+            run_forever(mirror, args.poll_seconds)
+        else:
+            success = mirror.sync(bootstrap=args.bootstrap)
+            sys.exit(0 if success else 1)
 
 
 if __name__ == "__main__":
