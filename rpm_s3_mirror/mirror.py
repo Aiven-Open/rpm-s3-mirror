@@ -86,36 +86,36 @@ class Mirror:
             # Extract our metadata and detect any new/updated packages.
             mirror_metadata = mirror_repository.parse_metadata()
             new_packages = set(upstream_metadata.package_list).difference(set(mirror_metadata.package_list))
+
         # Sync our mirror with upstream.
-        if new_packages:
-            self.s3.sync_packages(
-                base_url=upstream_metadata.base_url,
-                upstream_repodata=upstream_metadata.repodata,
-                upstream_packages=new_packages,
-                # If we are bootstrapping the s3 repo, it is worth checking if the package already exists as if the
-                # process is interrupted halfway through we would have to do a lot of potentially useless work. Once
-                # we have completed bootstrapping and are just running a sync we don't benefit from checking as it
-                # slows things down for no good reason (we expect the packages to be there already and if not
-                # it is a bug of some kind).
-                skip_existing=bootstrap
+        self.s3.sync_packages(
+            base_url=upstream_metadata.base_url,
+            upstream_repodata=upstream_metadata.repodata,
+            upstream_packages=new_packages,
+            # If we are bootstrapping the s3 repo, it is worth checking if the package already exists as if the
+            # process is interrupted halfway through we would have to do a lot of potentially useless work. Once
+            # we have completed bootstrapping and are just running a sync we don't benefit from checking as it
+            # slows things down for no good reason (we expect the packages to be there already and if not
+            # it is a bug of some kind).
+            skip_existing=bootstrap
+        )
+
+        # If we are not bootstrapping, store a manifest that describes the changes synced in this run
+        if not bootstrap:
+            manifest_location = self._build_manifest_location(base_url=upstream_repository.base_url)
+            repomd_path = join(manifest_location, "repomd.xml")
+            self.s3.archive_repomd(base_url=upstream_repository.base_url, location=repomd_path)
+            manifest = Manifest(
+                update_time=update_time,
+                upstream_repository=upstream_repository.base_url,
+                previous_repomd=repomd_path,
+                synced_packages=[package.to_dict() for package in new_packages],
             )
+            manifest_path = join(manifest_location, "manifest.json")
+            self.s3.put_manifest(location=manifest_path, manifest=manifest)
 
-            # If we are not bootstrapping, store a manifest that describes the changes synced in this run
-            if not bootstrap:
-                manifest_location = self._build_manifest_location(base_url=upstream_repository.base_url)
-                repomd_path = join(manifest_location, "repomd.xml")
-                self.s3.archive_repomd(base_url=upstream_repository.base_url, location=repomd_path)
-                manifest = Manifest(
-                    update_time=update_time,
-                    upstream_repository=upstream_repository.base_url,
-                    previous_repomd=repomd_path,
-                    synced_packages=[package.to_dict() for package in new_packages],
-                )
-                manifest_path = join(manifest_location, "manifest.json")
-                self.s3.put_manifest(location=manifest_path, manifest=manifest)
-
-            # Finally, overwrite the repomd.xml file to make our changes live
-            self.s3.overwrite_repomd(base_url=upstream_repository.base_url)
+        # Finally, overwrite the repomd.xml file to make our changes live
+        self.s3.overwrite_repomd(base_url=upstream_repository.base_url)
         self.log.info("Updated mirror with %s packages", len(new_packages))
         self.stats.gauge(
             metric="s3_mirror_sync_seconds",
