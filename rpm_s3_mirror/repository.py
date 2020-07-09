@@ -170,7 +170,7 @@ class RPMRepository:
         self._rewrite_repomd(repomd_xml=repomd_xml, snapshot=snapshot_primary)
         repomd_xml_path = join(scratch_dir, "repomd.xml")
         with open(repomd_xml_path, "wb+") as out:
-            out.write(tostring(repomd_xml))
+            out.write(tostring(repomd_xml, encoding="utf-8"))
 
         sync_files = []
         for section in repodata.values():
@@ -202,7 +202,7 @@ class RPMRepository:
 
             # Now we have rewritten our XML file the checksums no longer match, so calculate some new ones (along with
             # size etc from above).
-            compressed_xml = gzip.compress(tostring(primary_xml))
+            compressed_xml = gzip.compress(tostring(primary_xml, encoding="utf-8"))
             compressed_sha256 = sha256(compressed_xml)
             compressed_size = len(compressed_xml)
             local_path = f"{temp_dir}/{compressed_sha256}-primary.xml.gz"
