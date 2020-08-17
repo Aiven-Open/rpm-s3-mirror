@@ -4,7 +4,9 @@ import datetime
 import hashlib
 import os
 import shutil
+from http import HTTPStatus
 from os.path import join, basename
+from urllib.parse import urlparse, urlunsplit, SplitResult
 
 import requests
 from requests import Session
@@ -34,6 +36,31 @@ def get_requests_session() -> Session:
 
 def download_file(temp_dir: str, url: str, session: Session = None) -> str:
     session = session or get_requests_session()
+    try:
+        return _download_file(session, temp_dir, url)
+    except requests.exceptions.HTTPError as e:
+        if e.response.status_code == HTTPStatus.FORBIDDEN and e.response.headers.get("Server") == "AmazonS3":
+            # S3 has an annoying relationship with + signs where they have to be urlencoded.
+            # Try and download the file again with the encoded + sign and hope for the best.
+            return _download_file(session, temp_dir, _escape_s3_url(url))
+        else:
+            raise
+
+
+def _escape_s3_url(url: str) -> str:
+    parse_result = urlparse(url)
+    return urlunsplit(
+        SplitResult(
+            scheme=parse_result.scheme,
+            netloc=parse_result.netloc,
+            path=parse_result.path.replace("+", "%2B"),
+            query=parse_result.query,
+            fragment=None
+        )
+    )
+
+
+def _download_file(session, temp_dir, url):
     with session.get(url, stream=True) as request:
         request.raise_for_status()
         out_path = join(temp_dir, os.path.basename(url))
