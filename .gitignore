@@ -17,3 +17,4 @@ __pycache__/
 .idea
 .vagrant
 
+rpm_s3_mirror/version.py
