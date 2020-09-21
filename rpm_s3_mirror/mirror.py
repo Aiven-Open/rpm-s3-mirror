@@ -7,14 +7,14 @@ from os.path import join
 from tempfile import TemporaryDirectory
 
 import time
-from collections import namedtuple
+from collections import namedtuple, defaultdict
 from urllib.parse import urlparse
 
 from rpm_s3_mirror.repository import RPMRepository, safe_parse_xml
 from rpm_s3_mirror.s3 import S3, S3DirectoryNotFound
 from rpm_s3_mirror.statsd import StatsClient
 from rpm_s3_mirror.util import get_requests_session, now, get_snapshot_directory, get_snapshot_path, download_file, \
-    validate_checksum
+    validate_checksum, primary_xml_checksums_equal
 
 Manifest = namedtuple("Manifest", ["update_time", "upstream_repository", "previous_repomd", "synced_packages"])
 MANIFEST_DIRECTORY = "manifests"
@@ -72,7 +72,7 @@ class Mirror:
             self.log.info("Syncing repository: %s", upstream_repository.base_url)
             # If the upstream repomd.xml file was updated after the last time we updated our
             # mirror repomd.xml file then there is probably some work to do.
-            mirror_repository = RPMRepository(base_url=self._build_s3_url(upstream_repository))
+            mirror_repository = RPMRepository(base_url=self._build_s3_url(upstream_repository.base_url))
             last_check_time = self.s3.repomd_update_time(base_url=mirror_repository.base_url)
             if not upstream_repository.has_updates(since=last_check_time):
                 self.log.info("Skipping repository with no updates since: %s", last_check_time)
@@ -168,6 +168,43 @@ class Mirror:
                 repomd_destination = join(snapshot_path, "repodata", "repomd.xml")
                 self.s3.put_object(local_path=local_path, key=repomd_destination)
 
+    def diff_snapshots(self, old_snapshot, new_snapshot):
+        def create_mirror_repo(repo, snapshot):
+            snapshot_root = join(repo, "snapshots", snapshot)
+            mirror_url = self._build_s3_url(snapshot_root)
+            return RPMRepository(base_url=mirror_url)
+
+        diff = defaultdict(dict)
+        for upstream_repo in self.config.upstream_repositories:
+            repo1 = create_mirror_repo(upstream_repo, new_snapshot)
+            repo2 = create_mirror_repo(upstream_repo, old_snapshot)
+
+            # If the checksums of the primary.xml.gz files match then there are no
+            # changes. This saves quite a bit of time as it is expensive downloading
+            # and parsing these large XML blobs.
+            if primary_xml_checksums_equal(repo1=repo1, repo2=repo2):
+                self.log.debug("Skipping %s as primary xml is identical", upstream_repo)
+                continue
+
+            repo1_metadata = repo1.parse_metadata()
+            repo2_metadata = repo2.parse_metadata()
+
+            repo1_snapshot_list = repo1_metadata.package_list
+            repo2_snapshot_list = repo2_metadata.package_list
+            changed_packages = set(repo2_snapshot_list).difference(set(repo1_snapshot_list))
+
+            new_packages = {package.name: package for package in repo1_snapshot_list}
+            repo_path = urlparse(upstream_repo).path
+            diff[repo_path]["updated"] = {}
+            for package in sorted(changed_packages, key=lambda x: x.name):
+                orig_package = new_packages.get(package.name)
+                if orig_package:
+                    diff[repo_path]["updated"][package.name] = [
+                        [package.version, package.release],
+                        [orig_package.version, orig_package.release],
+                    ]
+        return diff
+
     def _validate_snapshot_id(self, snapshot_id):
         if not re.match(VALID_SNAPSHOT_REGEX, snapshot_id):
             raise InvalidSnapshotID(f"Snapshot id must match regex: {VALID_SNAPSHOT_REGEX}")
@@ -181,7 +218,7 @@ class Mirror:
 
     def _snapshot_repository(self, snapshot_id, temp_dir, upstream_repository):
         self.log.debug("Snapshotting repository: %s", upstream_repository.base_url)
-        repository = RPMRepository(base_url=self._build_s3_url(upstream_repository))
+        repository = RPMRepository(base_url=self._build_s3_url(upstream_repository.base_url))
         snapshot = repository.create_snapshot(scratch_dir=temp_dir)
         base_path = urlparse(repository.base_url).path[1:]  # need to strip the leading slash
         for file_path in snapshot.sync_files:
@@ -205,8 +242,8 @@ class Mirror:
             except Exception as e:  # pylint: disable=broad-except
                 self.log.warning("Failed to remove snapshot: %s - %s", snapshot_dir, e)
 
-    def _build_s3_url(self, upstream_repository) -> str:
-        dest_path = urlparse(upstream_repository.base_url).path
+    def _build_s3_url(self, base_url) -> str:
+        dest_path = urlparse(base_url).path
         # For some reason, s3 buckets in us-east-1 have a different URL structure to all the rest...
         if self.config.bucket_region == "us-east-1":
             s3_mirror_url = f"https://{self.config.bucket_name}.s3.amazonaws.com{dest_path}"
