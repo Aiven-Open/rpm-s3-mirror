@@ -20,6 +20,7 @@ Manifest = namedtuple("Manifest", ["update_time", "upstream_repository", "previo
 MANIFEST_DIRECTORY = "manifests"
 
 VALID_SNAPSHOT_REGEX = r"^[A-Za-z0-9_-]+$"
+SNAPSHOT_REGEX = re.compile(r"/snapshots/(?P<snapshot_id>[A-Za-z0-9_-]+)/repodata")
 
 
 class InvalidSnapshotID(ValueError):
@@ -143,6 +144,24 @@ class Mirror:
                 except Exception as e:
                     self._try_remove_snapshots(snapshot_id=snapshot_id)
                     raise Exception("Failed to snapshot repositories") from e
+
+    def list_snapshots(self):
+        snapshots = defaultdict(dict)
+        for repository in self.repositories:
+            repo_path = urlparse(repository.base_url).path
+            prefix = join(repo_path, "snapshots")
+            results = self.s3.list(prefix=prefix[1:])
+            for result in results:
+                key, last_modified = result["Key"], result["LastModified"]
+                # We write the repomd.xml file last so this time
+                # is when the snapshot is considered complete.
+                if key.endswith("repomd.xml"):
+                    match = SNAPSHOT_REGEX.search(key)
+                    if match:
+                        group = match.groupdict()
+                        snapshot_id = group["snapshot_id"]
+                        snapshots[repo_path][snapshot_id] = last_modified
+        return snapshots
 
     def sync_snapshot(self, snapshot_id):
         """ Sync a snapshot from one s3 mirror to another """
