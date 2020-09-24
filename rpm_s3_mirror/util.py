@@ -82,3 +82,9 @@ def get_snapshot_path(base_path, snapshot_id, file_path):
 
 def get_snapshot_directory(base_path, snapshot_id):
     return join(base_path, "snapshots", snapshot_id)
+
+
+def primary_xml_checksums_equal(repo1, repo2):
+    repo1_repomd = repo1.get_repodata()
+    repo2_repomd = repo2.get_repodata()
+    return repo1_repomd["primary"].checksum == repo2_repomd["primary"].checksum
