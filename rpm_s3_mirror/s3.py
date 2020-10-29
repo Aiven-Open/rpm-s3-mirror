@@ -115,6 +115,7 @@ class S3:
         elapsed = int(time.time() - start)
         self.log.info("Completed syncing %s objects in %s seconds", len(repo_objects), elapsed)
 
+    # pylint: disable=unsubscriptable-object
     def _sync_object(self, temp_dir: str, skip_existing: bool, repo_object: Union[Package, RepodataSection]):
         # When bootstrapping, support backfilling two versions of problematic packages (see below)
         workaround_destination = repo_object.destination.replace("+", " ")
