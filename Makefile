@@ -6,6 +6,7 @@ all:
 PYTHON ?= python3
 PYTHON_SOURCE_DIRS = rpm_s3_mirror/ tests/
 PYTEST_ARG ?= -v
+PYLINT=$(shell which pylint 2> /dev/null | which pylint-3)
 
 clean:
 	$(RM) -r *.egg-info/ build/ dist/ rpm/
@@ -46,7 +47,7 @@ coverage:
 	$(PYTHON) -m coverage report --show-missing
 
 pylint:
-	pylint --rcfile .pylintrc $(PYTHON_SOURCE_DIRS)
+	$(PYLINT) --rcfile .pylintrc $(PYTHON_SOURCE_DIRS)
 
 flake8:
 	$(PYTHON) -m flake8 --exclude=__init__.py --ignore=E722 --max-line-len=125 $(PYTHON_SOURCE_DIRS)
