@@ -2,9 +2,8 @@
 
 import argparse
 import logging
-from time import sleep
-
 import sys
+import time
 
 from rpm_s3_mirror.config import JSONConfig, ENVConfig
 from rpm_s3_mirror.mirror import Mirror
@@ -16,8 +15,11 @@ logging.getLogger("urllib3").setLevel(logging.WARNING)
 
 def run_forever(mirror, poll_seconds):
     while True:
+        start_time = time.monotonic()
         mirror.sync(bootstrap=False)
-        sleep(poll_seconds)
+        sleep_time = poll_seconds + start_time - time.monotonic()
+        if sleep_time > 0:
+            time.sleep(sleep_time)
 
 
 def main():
