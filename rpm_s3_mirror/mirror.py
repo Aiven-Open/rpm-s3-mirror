@@ -44,13 +44,13 @@ class Mirror:
         )
         self.repositories = [RPMRepository(base_url=url) for url in config.upstream_repositories]
 
-    def sync(self, bootstrap=False):
+    def sync(self):
         """ Sync upstream repositories to our s3 mirror """
         start = time.monotonic()
         sync_success = True
         for upstream_repository in self.repositories:
             try:
-                self._sync_repository(bootstrap, upstream_repository)
+                self._sync_repository(upstream_repository)
                 self.stats.gauge(metric="s3_mirror_failed", value=0, tags={"repo": upstream_repository.path})
             except Exception as e:  # pylint: disable=broad-except
                 self.log.exception("Failed to sync: %s", upstream_repository.base_url, exc_info=e)
@@ -62,10 +62,13 @@ class Mirror:
         self.stats.gauge(metric="s3_mirror_sync_seconds_total", value=time.monotonic() - start)
         return sync_success
 
-    def _sync_repository(self, bootstrap, upstream_repository):
+    def _sync_repository(self, upstream_repository):
         mirror_start = time.monotonic()
         update_time = now()
         upstream_metadata = upstream_repository.parse_metadata()
+
+        mirror_repository = RPMRepository(base_url=self._build_s3_url(upstream_repository.base_url))
+        bootstrap = False if mirror_repository.exists() else True
         if bootstrap:
             self.log.info("Bootstrapping repository: %s", upstream_repository.base_url)
             new_packages = upstream_metadata.package_list
@@ -73,7 +76,6 @@ class Mirror:
             self.log.info("Syncing repository: %s", upstream_repository.base_url)
             # If the upstream repomd.xml file was updated after the last time we updated our
             # mirror repomd.xml file then there is probably some work to do.
-            mirror_repository = RPMRepository(base_url=self._build_s3_url(upstream_repository.base_url))
             last_check_time = self.s3.repomd_update_time(base_url=mirror_repository.base_url)
             if not upstream_repository.has_updates(since=last_check_time):
                 self.log.info("Skipping repository with no updates since: %s", last_check_time)
@@ -125,7 +127,7 @@ class Mirror:
         )
 
     def _build_manifest_location(self, base_url):
-        sync_directory = now(microsecond=True).replace(tzinfo=None).isoformat()
+        sync_directory = now(microsecond=True).replace(tzinfo=None).isoformat()  # like '2021-10-25T01:57:04'
         manifest_location = join(urlparse(base_url).path, MANIFEST_DIRECTORY, sync_directory)
         return manifest_location
 

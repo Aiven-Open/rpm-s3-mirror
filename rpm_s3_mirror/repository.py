@@ -16,6 +16,7 @@ from os.path import join, basename
 import gzip
 
 from requests import Response
+from requests.exceptions import HTTPError
 
 from rpm_s3_mirror.util import get_requests_session, validate_checksum, sha256
 
@@ -157,6 +158,14 @@ class RPMRepository:
         package_list = self._extract_package_list(primary=repodata["primary"])
         return Metadata(package_list=package_list, repodata=repodata, base_url=self.base_url)
 
+    def exists(self):
+        # S3 will respond with HTTP 403 (Access Denied) if the object does not exist when we tried to retreive it using HTTP GET (public access)
+        # Also handle 404 for "normal" web server behaviour.
+        response = self._req(self.session.get, "repodata/repomd.xml", acceptible_status_code={200,403,404})
+        if response.status_code == 200:
+            return True
+        return False
+
     def get_repodata(self):
         response = self._req(self.session.get, "repodata/repomd.xml")
         repodata = self.parse_repomd(xml=safe_parse_xml(response.content))
@@ -273,9 +282,10 @@ class RPMRepository:
             )
         return sections
 
-    def _req(self, method, path, *, json=None, params=None, **kwargs) -> Response:
+    def _req(self, method, path, *, json=None, params=None, acceptible_status_code=None, **kwargs) -> Response:
+        acceptible_status_code = acceptible_status_code if acceptible_status_code else {200}
         url = f"{self.base_url}{path}"
         response = method(url, json=json, params=params, **kwargs)
-        if response.status_code != 200:
+        if response.status_code not in acceptible_status_code:
             response.raise_for_status()
         return response
