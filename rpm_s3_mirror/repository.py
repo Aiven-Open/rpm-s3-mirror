@@ -144,6 +144,8 @@ class RPMRepository:
             base_url += "/"
         self.base_url = base_url
         self.path = urlparse(base_url).path
+        if self.path.find("//") != -1:
+            raise ValueError("Consecutive slashes detected in URL path")
         self.session = get_requests_session()
 
     def has_updates(self, since: datetime) -> bool:
