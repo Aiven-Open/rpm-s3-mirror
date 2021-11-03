@@ -284,7 +284,7 @@ class RPMRepository:
         return sections
 
     def _req(self, method, path, *, json=None, params=None, acceptible_status_code=None, **kwargs) -> Response:
-        acceptible_status_code = acceptible_status_code if acceptible_status_code else {200}
+        acceptible_status_code = acceptible_status_code or {200}
         url = f"{self.base_url}{path}"
         response = method(url, json=json, params=params, **kwargs)
         if response.status_code not in acceptible_status_code:

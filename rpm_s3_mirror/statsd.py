@@ -66,6 +66,6 @@ class StatsClient:
                 parts.append(pattern.format(separator, tag, val).encode("utf-8"))
         else:
             for tag, val in send_tags.items():
-                parts.insert(1, ",{}={}".format(tag, val).encode("utf-8"))
+                parts.insert(1, f",{tag}={val}".encode("utf-8"))
 
         self._socket.sendto(b"".join(parts), self._dest_addr)

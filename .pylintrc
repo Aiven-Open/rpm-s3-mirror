@@ -36,7 +36,8 @@ disable=
     line-too-long,
     no-else-continue,
     no-else-break,
-    import-outside-toplevel
+    import-outside-toplevel,
+    unspecified-encoding
 
 [FORMAT]
 max-line-length=125
