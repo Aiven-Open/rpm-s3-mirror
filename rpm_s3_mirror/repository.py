@@ -16,7 +16,6 @@ from os.path import join, basename
 import gzip
 
 from requests import Response
-from requests.exceptions import HTTPError
 
 from rpm_s3_mirror.util import get_requests_session, validate_checksum, sha256
 
@@ -161,9 +160,9 @@ class RPMRepository:
         return Metadata(package_list=package_list, repodata=repodata, base_url=self.base_url)
 
     def exists(self):
-        # S3 will respond with HTTP 403 (Access Denied) if the object does not exist when we tried to retreive it using HTTP GET (public access)
-        # Also handle 404 for "normal" web server behaviour.
-        response = self._req(self.session.get, "repodata/repomd.xml", acceptible_status_code={200,403,404})
+        # S3 will respond with HTTP 403 (Access Denied) if the object does not exist when we tried to retreive it using
+        # HTTP GET (public access). Also handle 404 for "normal" web server behaviour.
+        response = self._req(self.session.get, "repodata/repomd.xml", acceptible_status_code={200, 403, 404})
         if response.status_code == 200:
             return True
         return False
