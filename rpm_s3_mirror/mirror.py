@@ -68,7 +68,7 @@ class Mirror:
         upstream_metadata = upstream_repository.parse_metadata()
 
         mirror_repository = RPMRepository(base_url=self._build_s3_url(upstream_repository.base_url))
-        bootstrap = False if mirror_repository.exists() else True
+        bootstrap = not mirror_repository.exists()
         if bootstrap:
             self.log.info("Bootstrapping repository: %s", upstream_repository.base_url)
             new_packages = upstream_metadata.package_list

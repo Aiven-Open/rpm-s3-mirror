@@ -6,7 +6,7 @@ all:
 PYTHON ?= python3
 PYTHON_SOURCE_DIRS = rpm_s3_mirror/ tests/
 PYTEST_ARG ?= -v
-PYLINT=$(shell which pylint 2> /dev/null | which pylint-3)
+PYLINT=$(shell which pylint 2> /dev/null || which pylint-3)
 
 clean:
 	$(RM) -r *.egg-info/ build/ dist/ rpm/
