@@ -29,7 +29,7 @@ def get_project_version(version_file):
     except (OSError, subprocess.CalledProcessError):
         pass
     else:
-        git_ver = git_out.splitlines()[0].strip().decode("utf-8")
+        git_ver = git_out.splitlines()[0].strip().decode("utf-8").replace("-g", ".g")
         if "." not in git_ver:
             git_ver = "0.0.1-0-unknown-{}".format(git_ver)
         if save_version(git_ver, file_ver, version_file):
