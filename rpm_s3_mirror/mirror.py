@@ -13,8 +13,15 @@ from urllib.parse import urlparse
 from rpm_s3_mirror.repository import RPMRepository, safe_parse_xml
 from rpm_s3_mirror.s3 import S3, S3DirectoryNotFound
 from rpm_s3_mirror.statsd import StatsClient
-from rpm_s3_mirror.util import get_requests_session, now, get_snapshot_directory, get_snapshot_path, download_file, \
-    validate_checksum, primary_xml_checksums_equal
+from rpm_s3_mirror.util import (
+    get_requests_session,
+    now,
+    get_snapshot_directory,
+    get_snapshot_path,
+    download_file,
+    validate_checksum,
+    primary_xml_checksums_equal,
+)
 
 Manifest = namedtuple("Manifest", ["update_time", "upstream_repository", "previous_repomd", "synced_packages"])
 MANIFEST_DIRECTORY = "manifests"
@@ -45,7 +52,7 @@ class Mirror:
         self.repositories = [RPMRepository(base_url=url) for url in config.upstream_repositories]
 
     def sync(self):
-        """ Sync upstream repositories to our s3 mirror """
+        """Sync upstream repositories to our s3 mirror"""
         start = time.monotonic()
         sync_success = True
         for upstream_repository in self.repositories:
@@ -100,7 +107,7 @@ class Mirror:
             # we have completed bootstrapping and are just running a sync we don't benefit from checking as it
             # slows things down for no good reason (we expect the packages to be there already and if not
             # it is a bug of some kind).
-            skip_existing=bootstrap
+            skip_existing=bootstrap,
         )
 
         # If we are not bootstrapping, store a manifest that describes the changes synced in this run
@@ -132,7 +139,7 @@ class Mirror:
         return manifest_location
 
     def snapshot(self, snapshot_id):
-        """ Create a named snapshot of upstream repositories at a point in time """
+        """Create a named snapshot of upstream repositories at a point in time"""
         self.log.info("Creating snapshot: %s", snapshot_id)
         self._validate_snapshot_id(snapshot_id)
         with TemporaryDirectory(prefix=self.config.scratch_dir) as temp_dir:
@@ -166,7 +173,7 @@ class Mirror:
         return snapshots
 
     def sync_snapshot(self, snapshot_id):
-        """ Sync a snapshot from one s3 mirror to another """
+        """Sync a snapshot from one s3 mirror to another"""
         self.log.info("Syncing snapshot: %s", snapshot_id)
         self._validate_snapshot_id(snapshot_id)
         for upstream_repo in self.config.upstream_repositories:

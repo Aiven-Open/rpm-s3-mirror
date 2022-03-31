@@ -55,7 +55,7 @@ def _escape_s3_url(url: str) -> str:
             netloc=parse_result.netloc,
             path=parse_result.path.replace("+", "%2B"),
             query=parse_result.query,
-            fragment=None
+            fragment=None,
         )
     )
 
