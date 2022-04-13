@@ -9,6 +9,7 @@ docstring-quote=double
 disable=
     abstract-method,
     bad-continuation,
+    bad-whitespace,  # Black deals with whitespace around operators and brackets
     chained-comparison,  # R1716: Simplify chained comparison between the operands
     duplicate-code,
     fixme,

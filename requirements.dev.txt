@@ -1,0 +1,4 @@
+# Lock black to the same major version used in downstream build environments
+black==21.6b0
+# To prevent black from breaking (https://github.com/psf/black/issues/2964, https://github.com/psf/black/pull/2966)
+click<8.1.0

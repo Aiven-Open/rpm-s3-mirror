@@ -22,7 +22,7 @@ from rpm_s3_mirror.util import get_requests_session, validate_checksum, sha256
 namespaces = {
     "common": "http://linux.duke.edu/metadata/common",
     "repo": "http://linux.duke.edu/metadata/repo",
-    "rpm": "http://linux.duke.edu/metadata/rpm"
+    "rpm": "http://linux.duke.edu/metadata/rpm",
 }
 
 
@@ -108,20 +108,27 @@ class PackageList:
             yield Package(base_url=self.base_url, destination_path=self.path, package_element=package_element)
 
 
-Metadata = namedtuple("Metadata", [
-    "package_list",
-    "repodata",
-    "base_url",
-])
-RepodataSection = namedtuple("RepodataSection", [
-    "url",
-    "location",
-    "destination",
-    "checksum_type",
-    "checksum",
-])
+Metadata = namedtuple(
+    "Metadata",
+    [
+        "package_list",
+        "repodata",
+        "base_url",
+    ],
+)
+RepodataSection = namedtuple(
+    "RepodataSection",
+    [
+        "url",
+        "location",
+        "destination",
+        "checksum_type",
+        "checksum",
+    ],
+)
 SnapshotPrimary = namedtuple(
-    "SnapshotPrimary", [
+    "SnapshotPrimary",
+    [
         "open_checksum",
         "checksum",
         "checksum_type",
@@ -129,7 +136,7 @@ SnapshotPrimary = namedtuple(
         "open_size",
         "local_path",
         "location",
-    ]
+    ],
 )
 
 Snapshot = namedtuple("Snapshot", ["sync_files", "upload_files"])
@@ -184,9 +191,11 @@ class RPMRepository:
 
         sync_files = []
         for section in repodata.values():
-            if section.location.endswith(".xml.gz") \
-                    or section.location.endswith("updateinfo.xml.xz") \
-                    or section.location.endswith("modules.yaml.gz"):
+            if (
+                section.location.endswith(".xml.gz")
+                or section.location.endswith("updateinfo.xml.xz")
+                or section.location.endswith("modules.yaml.gz")
+            ):
                 sync_files.append(urlparse(join(self.base_url, section.location)).path)
         return Snapshot(
             sync_files=sync_files,
@@ -226,7 +235,7 @@ class RPMRepository:
                 size=compressed_size,
                 open_size=open_size,
                 local_path=local_path,
-                location=f"repodata/{basename(local_path)}"
+                location=f"repodata/{basename(local_path)}",
             )
 
     def _rewrite_repomd(self, repomd_xml, snapshot: SnapshotPrimary):

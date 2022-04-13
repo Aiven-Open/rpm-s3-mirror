@@ -23,6 +23,7 @@ rpm:
 
 build-dep-fed:
 	sudo dnf -y install --best --allowerasing \
+		python3-black \
 		python3-defusedxml \
 		python3-requests \
 		python3-dateutil \
@@ -32,7 +33,17 @@ build-dep-fed:
 test: copyright lint unittest
 
 reformat:
-	yapf --parallel --recursive --in-place tests/ rpm_s3_mirror/
+	$(PYTHON) -m black tests/ rpm_s3_mirror/
+
+validate-style:
+	$(eval CHANGES_BEFORE := $(shell mktemp))
+	git diff > $(CHANGES_BEFORE)
+	$(MAKE) reformat
+	$(eval CHANGES_AFTER := $(shell mktemp))
+	git diff > $(CHANGES_AFTER)
+	diff $(CHANGES_BEFORE) $(CHANGES_AFTER)
+	-rm $(CHANGES_BEFORE) $(CHANGES_AFTER)
+
 
 .PHONY: copyright
 copyright:

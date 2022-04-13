@@ -120,8 +120,9 @@ class S3:
         # When bootstrapping, support backfilling two versions of problematic packages (see below)
         workaround_destination = repo_object.destination.replace("+", " ")
         if skip_existing:
-            if ("+" in repo_object.destination and self._object_exists(workaround_destination)) \
-                    and self._object_exists(repo_object.destination):
+            if ("+" in repo_object.destination and self._object_exists(workaround_destination)) and self._object_exists(
+                repo_object.destination
+            ):
                 self.log.debug("SKIP: %s", repo_object.destination)
                 return
 
@@ -158,7 +159,7 @@ class S3:
                 CacheControl=f"max-age={cache_age}",
                 Key=key,
                 Body=package_fp,
-                ContentMD5=md5_header
+                ContentMD5=md5_header,
             )
 
     def delete_subdirectory(self, subdir):
@@ -191,7 +192,7 @@ class S3:
             },
             ACL="public-read",
             Key=destination,
-            CacheControl="max-age=0"
+            CacheControl="max-age=0",
         )
 
     def _object_exists(self, key: str) -> bool:

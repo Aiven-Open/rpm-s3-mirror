@@ -40,6 +40,6 @@ def mirror_config():
             "aws_secret_access_key": "***",
             "bucket_name": "some-bucket",
             "bucket_region": "ap-southeast-2",
-            "upstream_repositories": ["https://someupstreamrepo/os"]
+            "upstream_repositories": ["https://someupstreamrepo/os"],
         }
     )
