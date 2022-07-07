@@ -78,13 +78,11 @@ class S3:
             )
             self._sync_objects(temp_dir=temp_dir, repo_objects=upstream_repodata.values(), skip_existing=skip_existing)
 
-    def overwrite_repomd(self, base_url):
-        with TemporaryDirectory(prefix=self.scratch_dir) as temp_dir:
-            url = f"{base_url}repodata/repomd.xml"
-            repomd_xml = download_file(temp_dir=temp_dir, url=url, session=self.session)
-            path = urlparse(url).path
-            self.log.info("Overwriting repomd.xml")
-            self.put_object(repomd_xml, path, cache_age=0)
+    def overwrite_repomd(self, repomd_xml_local_path, base_url):
+        url = f"{base_url}repodata/repomd.xml"
+        remote_path = urlparse(url).path
+        self.log.info("Overwriting repomd.xml")
+        self.put_object(repomd_xml_local_path, remote_path, cache_age=0)
 
     def archive_repomd(self, base_url, location):
         self.log.debug("Archiving repomd.xml to %s", location)
