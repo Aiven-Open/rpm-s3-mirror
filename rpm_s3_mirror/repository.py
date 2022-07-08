@@ -143,6 +143,8 @@ Snapshot = namedtuple("Snapshot", ["sync_files", "upload_files"])
 
 
 class RPMRepository:
+    """Upstream repository. This MAY NOT be a S3 bucket."""
+
     def __init__(self, base_url: str):
         if not base_url.startswith("https://"):
             raise ValueError("Only https upstream repositories can be synced from")
@@ -238,7 +240,7 @@ class RPMRepository:
                 location=f"repodata/{basename(local_path)}",
             )
 
-    def _rewrite_repomd(self, repomd_xml, snapshot: SnapshotPrimary):
+    def _rewrite_repomd(self, repomd_xml: Element, snapshot: SnapshotPrimary):
         for element in repomd_xml.findall("repo:*", namespaces=namespaces):
             # We only support *.xml.gz files currently
             if element.attrib.get("type", None) not in {"primary", "filelists", "other", "modules", "updateinfo"}:

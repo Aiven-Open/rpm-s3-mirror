@@ -35,6 +35,7 @@ def get_requests_session() -> Session:
 
 
 def download_file(temp_dir: str, url: str, session: Session = None) -> str:
+    """Download a file and return the local path."""
     session = session or get_requests_session()
     try:
         return _download_file(session, temp_dir, url)
@@ -60,7 +61,7 @@ def _escape_s3_url(url: str) -> str:
     )
 
 
-def _download_file(session, temp_dir, url):
+def _download_file(session, temp_dir, url) -> str:
     with session.get(url, stream=True) as request:
         request.raise_for_status()
         out_path = join(temp_dir, os.path.basename(url))
