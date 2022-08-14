@@ -1,7 +1,9 @@
 # Copyright (c) 2020 Aiven, Helsinki, Finland. https://aiven.io/
 import dataclasses
+import lzma
 import re
 import subprocess
+from abc import abstractmethod
 from collections import namedtuple
 from datetime import datetime
 from typing import Iterator, Dict, Optional, Tuple
@@ -147,29 +149,78 @@ class SectionMetadata:
 
 
 class UpdateInfoSection:
-    def __init__(self, path: str):
-        # TOD: Add support for .xz metadata.
-        if not path.endswith(".zck"):
-            raise ValueError("Only .zck files are supported")
+    def __init__(self, path: str, scratch_dir):
         self.path = path
+        self.scratch_dir = scratch_dir
 
-    def strip_to_arches(self, arches, scratch_dir):
-        result = subprocess.run(["unzck", self.path, "--stdout"], stdout=subprocess.PIPE, check=True)
-        root = safe_parse_xml(result.stdout)
+    @classmethod
+    def from_path(cls, path: str, scratch_dir):
+        if path.endswith(".zck"):
+            return ZCKUpdateInfoSection(path, scratch_dir)
+        elif path.endswith(".xz"):
+            return XZUpdateInfoSection(path, scratch_dir)
+        else:
+            raise ValueError("Only xz and zck files supported")
+
+    @abstractmethod
+    def _read(self) -> bytes:
+        pass
+
+    @abstractmethod
+    def _compress(self, root, open_size, open_checksum):
+        pass
+
+    def strip_to_arches(self, arches):
+        xml_bytes = self._read()
+        root = safe_parse_xml(xml_bytes)
         self._strip(root, arches)
-        return self._update_metadata(root, scratch_dir)
+        open_size = len(xml_bytes)
+        open_checksum = sha256(xml_bytes)
+        return self._compress(root, open_size, open_checksum)
 
-    def _update_metadata(self, root, scratch_dir):
-        stripped_path = os.path.join(scratch_dir, "stripped.xml")
+    def _strip(self, root, arches):
+        for update_element in root:
+            for collection in update_element.find("pkglist"):
+                for package in collection.getchildren():
+                    arch = package.get("arch")
+                    if arch is not None and arch not in arches:
+                        collection.remove(package)
+
+
+class XZUpdateInfoSection(UpdateInfoSection):
+    def _read(self) -> bytes:
+        with lzma.open(self.path, mode="rb") as f:
+            return f.read()
+
+    def _compress(self, root, open_size, open_checksum):
+        compressed_xml = lzma.compress(tostring(root, encoding="utf-8"))
+        compressed_sha256 = sha256(compressed_xml)
+        compressed_size = len(compressed_xml)
+
+        local_path = os.path.join(self.scratch_dir, f"{compressed_sha256}-updateinfo.xml.xz")
+        with open(local_path, "wb+") as out:
+            out.write(compressed_xml)
+        return SectionMetadata(
+            open_checksum=open_checksum,
+            checksum=compressed_sha256,
+            checksum_type="sha256",
+            size=compressed_size,
+            open_size=open_size,
+            local_path=local_path,
+            location=f"repodata/{basename(local_path)}",
+        )
+
+
+class ZCKUpdateInfoSection(UpdateInfoSection):
+    def _read(self):
+        return subprocess.check_output(["unzck", self.path, "--stdout"])
+
+    def _compress(self, root, open_size, open_checksum):
+        stripped_path = os.path.join(self.scratch_dir, "stripped.xml")
         ElementTree(root).write(stripped_path)
 
-        # Take open checksum and size.
-        sha256_out = subprocess.check_output(["sha256sum", stripped_path], text=True)
-        open_checksum = sha256_out.split()[0]
-        open_size = os.path.getsize(stripped_path)
-
         # Now compress and take compressed checksum,size.
-        compressed_stripped_path = os.path.join(scratch_dir, "stripped.xml.zck")
+        compressed_stripped_path = os.path.join(self.scratch_dir, "stripped.xml.zck")
         subprocess.check_call(["zck", stripped_path, "-o", compressed_stripped_path])
         sha256_compressed_out = subprocess.check_output(["sha256sum", compressed_stripped_path], text=True)
         checksum = sha256_compressed_out.split()[0]
@@ -178,7 +229,7 @@ class UpdateInfoSection:
         # We also need some ZChunk specific metadata.
         header_out = subprocess.check_output(["zck_read_header", compressed_stripped_path], text=True)
         header_checksum, header_size = self._parse_zck_read_header(output=header_out)
-        final_path = os.path.join(scratch_dir, f"{checksum}-updateinfo.xml.zck")
+        final_path = os.path.join(self.scratch_dir, f"{checksum}-updateinfo.xml.zck")
 
         # Rename it in the same format as the other sections.
         os.rename(compressed_stripped_path, final_path)
@@ -193,13 +244,6 @@ class UpdateInfoSection:
             local_path=final_path,
             location=f"repodata/{os.path.basename(final_path)}",
         )
-
-    def _strip(self, root, arches):
-        for update_element in root:
-            for collection in update_element.find("pkglist"):
-                for package in collection.getchildren():
-                    if package.get("arch") not in arches:
-                        collection.remove(package)
 
     def _parse_zck_read_header(self, output):
         checksum_match = re.search("Header checksum: (?P<checksum>.*$)", output, flags=re.MULTILINE)
@@ -261,11 +305,11 @@ class RPMRepository:
         repomd_xml = safe_parse_xml(xml_bytes)
         repodata = self.parse_repomd(xml=repomd_xml)
         for key, section in repodata.items():
-            if key.startswith("updateinfo_zck"):
+            if key.startswith("updateinfo"):
                 with self._req(self.session.get, path=section.location, stream=True) as request:
                     local_path = download_repodata_section(section, request, destination_dir=scratch_dir)
-                    update_section = UpdateInfoSection(path=local_path)
-                    rewritten_section = update_section.strip_to_arches(arches=target_arches, scratch_dir=scratch_dir)
+                    update_section = UpdateInfoSection.from_path(path=local_path, scratch_dir=scratch_dir)
+                    rewritten_section = update_section.strip_to_arches(arches=target_arches)
                     self._rewrite_repomd(repomd_xml=repomd_xml, snapshot=rewritten_section, section_name=key)
                     upload_files.append(rewritten_section.local_path)
         repomd_xml_path = join(scratch_dir, "repomd.xml")
