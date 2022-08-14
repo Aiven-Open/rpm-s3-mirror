@@ -81,7 +81,6 @@ class S3:
     def overwrite_repomd(self, repomd_xml_local_path, base_url):
         url = f"{base_url}repodata/repomd.xml"
         remote_path = urlparse(url).path
-        self.log.info("Overwriting repomd.xml")
         self.put_object(repomd_xml_local_path, remote_path, cache_age=0)
 
     def archive_repomd(self, base_url, location):

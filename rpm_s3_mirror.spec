@@ -14,6 +14,7 @@ Requires:       python3-dateutil
 Requires:       python3-boto3
 Requires:       python3-lxml
 Requires:       systemd
+Requires:       zchunk
 
 %undefine _missing_build_ids_terminate_build
 
