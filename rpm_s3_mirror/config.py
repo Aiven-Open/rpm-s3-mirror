@@ -16,6 +16,7 @@ REQUIRED = {
 DEFAULTS = {
     "scratch_dir": "/var/tmp/",
     "max_workers": 4,
+    "trim_updates_to_arches": [],
 }
 
 
@@ -31,6 +32,7 @@ class Config:
     scratch_dir = None
     max_workers = None
     upstream_repositories = None
+    trim_updates_to_arches = None
     _config = DEFAULTS
 
     def __init__(self):
@@ -63,7 +65,7 @@ class ENVConfig(Config):
                     raise ConfigError(f"Missing required environment variable: {key.upper()}")
                 else:
                     continue
-            elif key == "upstream_repositories":
+            elif key in ("upstream_repositories", "trim_updates_to_arches"):
                 value = value.split(",")
             elif key == "max_workers":
                 value = int(value)

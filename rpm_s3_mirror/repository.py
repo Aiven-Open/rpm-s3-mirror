@@ -1,9 +1,14 @@
 # Copyright (c) 2020 Aiven, Helsinki, Finland. https://aiven.io/
-
+import dataclasses
+import lzma
+import re
+import subprocess
+from abc import abstractmethod
 from collections import namedtuple
 from datetime import datetime
-from typing import Iterator, Dict
+from typing import Iterator, Dict, Optional, Tuple
 from urllib.parse import urlparse
+from xml.etree.ElementTree import ElementTree
 
 from lxml.etree import fromstring, Element, tostring  # pylint: disable=no-name-in-module
 from lxml.etree import XMLParser  # pylint: disable=no-name-in-module
@@ -126,20 +131,128 @@ RepodataSection = namedtuple(
         "checksum",
     ],
 )
-SnapshotPrimary = namedtuple(
-    "SnapshotPrimary",
-    [
-        "open_checksum",
-        "checksum",
-        "checksum_type",
-        "size",
-        "open_size",
-        "local_path",
-        "location",
-    ],
-)
 
-Snapshot = namedtuple("Snapshot", ["sync_files", "upload_files"])
+RepoDataFiles = namedtuple("RepoDataFiles", ["sync_files", "upload_files"])
+
+
+@dataclasses.dataclass
+class SectionMetadata:
+    size: int
+    open_size: int
+    open_checksum: str
+    checksum: str
+    local_path: str
+    location: str
+    checksum_type: str = "sha256"
+    header_checksum: Optional[str] = None
+    header_size: Optional[int] = None
+
+
+class UpdateInfoSection:
+    def __init__(self, path: str, scratch_dir):
+        self.path = path
+        self.scratch_dir = scratch_dir
+
+    @classmethod
+    def from_path(cls, path: str, scratch_dir):
+        if path.endswith(".zck"):
+            return ZCKUpdateInfoSection(path, scratch_dir)
+        elif path.endswith(".xz"):
+            return XZUpdateInfoSection(path, scratch_dir)
+        else:
+            raise ValueError("Only xz and zck files supported")
+
+    @abstractmethod
+    def _read(self) -> bytes:
+        pass
+
+    @abstractmethod
+    def _compress(self, root, open_size, open_checksum):
+        pass
+
+    def strip_to_arches(self, arches):
+        xml_bytes = self._read()
+        root = safe_parse_xml(xml_bytes)
+        self._strip(root, arches)
+        open_size = len(xml_bytes)
+        open_checksum = sha256(xml_bytes)
+        return self._compress(root, open_size, open_checksum)
+
+    def _strip(self, root, arches):
+        for update_element in root:
+            for collection in update_element.find("pkglist"):
+                for package in collection.getchildren():
+                    arch = package.get("arch")
+                    if arch is not None and arch not in arches:
+                        collection.remove(package)
+
+
+class XZUpdateInfoSection(UpdateInfoSection):
+    def _read(self) -> bytes:
+        with lzma.open(self.path, mode="rb") as f:
+            return f.read()
+
+    def _compress(self, root, open_size, open_checksum):
+        compressed_xml = lzma.compress(tostring(root, encoding="utf-8"))
+        compressed_sha256 = sha256(compressed_xml)
+        compressed_size = len(compressed_xml)
+
+        local_path = os.path.join(self.scratch_dir, f"{compressed_sha256}-updateinfo.xml.xz")
+        with open(local_path, "wb+") as out:
+            out.write(compressed_xml)
+        return SectionMetadata(
+            open_checksum=open_checksum,
+            checksum=compressed_sha256,
+            checksum_type="sha256",
+            size=compressed_size,
+            open_size=open_size,
+            local_path=local_path,
+            location=f"repodata/{basename(local_path)}",
+        )
+
+
+class ZCKUpdateInfoSection(UpdateInfoSection):
+    def _read(self):
+        return subprocess.check_output(["unzck", self.path, "--stdout"])
+
+    def _compress(self, root, open_size, open_checksum):
+        stripped_path = os.path.join(self.scratch_dir, "stripped.xml")
+        ElementTree(root).write(stripped_path)
+
+        # Now compress and take compressed checksum,size.
+        compressed_stripped_path = os.path.join(self.scratch_dir, "stripped.xml.zck")
+        subprocess.check_call(["zck", stripped_path, "-o", compressed_stripped_path])
+        sha256_compressed_out = subprocess.check_output(["sha256sum", compressed_stripped_path], text=True)
+        checksum = sha256_compressed_out.split()[0]
+        size = os.path.getsize(compressed_stripped_path)
+
+        # We also need some ZChunk specific metadata.
+        header_out = subprocess.check_output(["zck_read_header", compressed_stripped_path], text=True)
+        header_checksum, header_size = self._parse_zck_read_header(output=header_out)
+        final_path = os.path.join(self.scratch_dir, f"{checksum}-updateinfo.xml.zck")
+
+        # Rename it in the same format as the other sections.
+        os.rename(compressed_stripped_path, final_path)
+
+        return SectionMetadata(
+            size=size,
+            open_size=open_size,
+            header_size=header_size,
+            header_checksum=header_checksum,
+            open_checksum=open_checksum,
+            checksum=checksum,
+            local_path=final_path,
+            location=f"repodata/{os.path.basename(final_path)}",
+        )
+
+    def _parse_zck_read_header(self, output):
+        checksum_match = re.search("Header checksum: (?P<checksum>.*$)", output, flags=re.MULTILINE)
+        if not checksum_match:
+            raise ValueError(f"Failed to locate checksum in output: {output}")
+        size_match = re.search("Header size:(?P<size>.*$)", output, flags=re.MULTILINE)
+        if not size_match:
+            raise ValueError(f"Failed to locate size in output: {output}")
+        return checksum_match.groupdict()["checksum"], int(size_match.groupdict()["size"])
 
 
 class RPMRepository:
@@ -176,17 +289,45 @@ class RPMRepository:
             return True
         return False
 
-    def get_repodata(self):
-        response = self._req(self.session.get, "repodata/repomd.xml")
-        repodata = self.parse_repomd(xml=safe_parse_xml(response.content))
+    def get_repodata(self, xml_bytes=None):
+        if xml_bytes is None:
+            xml_bytes = self._req(self.session.get, "repodata/repomd.xml").content
+        repodata = self.parse_repomd(xml=safe_parse_xml(xml_bytes))
         return repodata
+
+    def strip_metadata(
+        self,
+        xml_bytes: bytes,
+        target_arches: Tuple[str],
+        scratch_dir: str,
+    ):
+        sync_files, upload_files = [], []
+        repomd_xml = safe_parse_xml(xml_bytes)
+        repodata = self.parse_repomd(xml=repomd_xml)
+        for key, section in repodata.items():
+            if key.startswith("updateinfo"):
+                with self._req(self.session.get, path=section.location, stream=True) as request:
+                    local_path = download_repodata_section(section, request, destination_dir=scratch_dir)
+                    update_section = UpdateInfoSection.from_path(path=local_path, scratch_dir=scratch_dir)
+                    rewritten_section = update_section.strip_to_arches(arches=target_arches)
+                    self._rewrite_repomd(repomd_xml=repomd_xml, snapshot=rewritten_section, section_name=key)
+                    upload_files.append(rewritten_section.local_path)
+        repomd_xml_path = join(scratch_dir, "repomd.xml")
+        with open(repomd_xml_path, "wb+") as out:
+            out.write(tostring(repomd_xml, encoding="utf-8"))
+        upload_files.append(repomd_xml_path)
+
+        return RepoDataFiles(
+            sync_files=sync_files,
+            upload_files=upload_files,
+        )
 
     def create_snapshot(self, scratch_dir):
         response = self._req(self.session.get, "repodata/repomd.xml")
         repomd_xml = safe_parse_xml(response.content)
         repodata = self.parse_repomd(xml=repomd_xml)
         snapshot_primary = self._rewrite_primary(temp_dir=scratch_dir, primary=repodata["primary"])
-        self._rewrite_repomd(repomd_xml=repomd_xml, snapshot=snapshot_primary)
+        self._rewrite_repomd(repomd_xml=repomd_xml, snapshot=snapshot_primary, section_name="primary")
         repomd_xml_path = join(scratch_dir, "repomd.xml")
         with open(repomd_xml_path, "wb+") as out:
             out.write(tostring(repomd_xml, encoding="utf-8"))
@@ -199,7 +340,7 @@ class RPMRepository:
                 or section.location.endswith("modules.yaml.gz")
             ):
                 sync_files.append(urlparse(join(self.base_url, section.location)).path)
-        return Snapshot(
+        return RepoDataFiles(
             sync_files=sync_files,
             upload_files=[repomd_xml_path, snapshot_primary.local_path],
         )
@@ -230,7 +371,7 @@ class RPMRepository:
             with open(local_path, "wb+") as out:
                 out.write(compressed_xml)
 
-            return SnapshotPrimary(
+            return SectionMetadata(
                 open_checksum=open_checksum,
                 checksum=compressed_sha256,
                 checksum_type="sha256",
@@ -240,14 +381,9 @@ class RPMRepository:
                 location=f"repodata/{basename(local_path)}",
             )
 
-    def _rewrite_repomd(self, repomd_xml: Element, snapshot: SnapshotPrimary):
-        for element in repomd_xml.findall("repo:*", namespaces=namespaces):
-            # We only support *.xml.gz files currently
-            if element.attrib.get("type", None) not in {"primary", "filelists", "other", "modules", "updateinfo"}:
-                repomd_xml.remove(element)
-
+    def _rewrite_repomd(self, repomd_xml: Element, snapshot: SectionMetadata, section_name: str):
         # Rewrite the XML with correct metadata for our changed primary.xml
-        for element in repomd_xml.find("repo:data[@type='primary']", namespaces=namespaces):
+        for element in repomd_xml.find(f"repo:data[@type='{section_name}']", namespaces=namespaces):
             _, _, key = element.tag.partition("}")
             if key == "checksum":
                 element.text = snapshot.checksum
@@ -259,6 +395,10 @@ class RPMRepository:
                 element.text = str(snapshot.size)
             elif key == "open-size":
                 element.text = str(snapshot.open_size)
+            elif key == "header-size" and snapshot.header_size is not None:
+                element.text = str(snapshot.header_size)
+            elif key == "header-checksum" and snapshot.header_checksum is not None:
+                element.text = snapshot.header_checksum
 
     def _extract_package_list(self, primary: RepodataSection) -> PackageList:
         with self._req(self.session.get, path=primary.location, stream=True) as request:

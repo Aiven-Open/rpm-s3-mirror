@@ -1,9 +1,10 @@
 # Copyright (c) 2020 Aiven, Helsinki, Finland. https://aiven.io/
 
 import logging
+import os
 import re
 from contextlib import suppress
-from os.path import join
+from os.path import join, basename
 from tempfile import TemporaryDirectory
 
 import time
@@ -132,10 +133,31 @@ class Mirror:
                 manifest_path = join(manifest_location, "manifest.json")
                 self.s3.put_manifest(location=manifest_path, manifest=manifest)
 
-            # Finally, overwrite the repomd.xml file to make our changes live
-            # Copy from the cached file in /var/tmp, because sync_packages may take a bit of time, and repomd.xml may
-            # change in upstream.
-            self.s3.overwrite_repomd(repomd_xml_local_path=cache_xml_path, base_url=upstream_repository.base_url)
+            # The metadata can be quite large and cause dnf to use excessive memory processing
+            # the updates. As an optimization, support dropping architectures that we know
+            # we don't need.
+            if self.config.trim_updates_to_arches:
+                self.log.info("Trimming metadata to: %s", self.config.trim_updates_to_arches)
+                metadata_scratch = os.path.join(temp_dir, "metadata")
+                os.makedirs(metadata_scratch, exist_ok=True)
+                with open(cache_xml_path, "rb") as f:
+                    repodata_files = upstream_repository.strip_metadata(
+                        xml_bytes=f.read(),
+                        target_arches=self.config.trim_updates_to_arches,
+                        scratch_dir=metadata_scratch,
+                    )
+                    base_path = urlparse(upstream_repository.base_url).path[1:]  # need to strip the leading slash
+                    for file_path in repodata_files.upload_files:
+                        dest_path = join(base_path, "repodata", basename(file_path))
+                        self.log.info("Uploading: %s -> %s", file_path, dest_path)
+                        self.s3.put_object(
+                            local_path=file_path,
+                            key=dest_path,
+                        )
+            else:
+                # Overwrite the repomd.xml file from upstream to make our changes live.
+                self.log.info("Overwriting repomd.xml")
+                self.s3.overwrite_repomd(repomd_xml_local_path=cache_xml_path, base_url=upstream_repository.base_url)
         self.log.info("Updated mirror with %s packages", len(new_packages))
         self.stats.gauge(
             metric="s3_mirror_sync_seconds",
