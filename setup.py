@@ -1,14 +1,11 @@
 # Copyright (c) 2020 Aiven, Helsinki, Finland. https://aiven.io/
 
 from setuptools import setup
-import version
-
-version = version.get_project_version("rpm_s3_mirror/version.py")
 
 setup(
     name="rpm_s3_mirror",
     packages=["rpm_s3_mirror"],
-    version=version,
+    version="0.9",
     description="Tool for syncing RPM repositories with S3",
     license="Apache 2.0",
     author="Aiven",
