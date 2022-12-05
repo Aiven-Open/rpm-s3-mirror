@@ -13,7 +13,7 @@ from tempfile import TemporaryDirectory, NamedTemporaryFile
 from typing import Collection, Union, BinaryIO, Dict, Iterable
 from urllib.parse import urlparse
 
-import boto3
+import botocore.session
 import botocore.exceptions
 import time
 
@@ -220,7 +220,8 @@ class S3:
         if self._s3 is None:
             # The boto3 client call is not threadsafe, so only allow calling it from a singe thread at a time
             with lock:
-                self._s3 = boto3.client(
+                botocore_session = botocore.session.get_session()
+                self._s3 = botocore_session.create_client(
                     "s3",
                     region_name=self.bucket_region,
                     aws_access_key_id=self.aws_access_key_id,

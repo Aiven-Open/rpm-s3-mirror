@@ -18,7 +18,7 @@ setup(
         "defusedxml",
         "requests",
         "python-dateutil",
-        "boto3",
+        "botocore",
         "lxml",
     ],
     entry_points={
