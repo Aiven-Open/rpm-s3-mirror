@@ -27,7 +27,7 @@ build-dep-fed:
 		python3-defusedxml \
 		python3-requests \
 		python3-dateutil \
-		python3-boto3 \
+		python3-botocore \
 		python3-lxml
 
 test: copyright lint unittest

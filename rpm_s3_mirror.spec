@@ -11,7 +11,7 @@ BuildRequires:  rpm-build
 Requires:       python3-defusedxml
 Requires:       python3-requests
 Requires:       python3-dateutil
-Requires:       python3-boto3
+Requires:       python3-botocore
 Requires:       python3-lxml
 Requires:       systemd
 Requires:       zchunk
