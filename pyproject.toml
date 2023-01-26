@@ -1,3 +1,58 @@
+[build-system]
+requires = ["hatchling", "hatch-vcs"]
+build-backend = "hatchling.build"
+
+[project]
+name = "rpm_s3_mirror"
+authors = [
+  { name="Aiven", email="support@aiven.io" },
+]
+description = "Tool for syncing RPM repositories with S3"
+readme = "README.md"
+requires-python = ">=3.7"
+classifiers=[
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Information Technology",
+    "Intended Audience :: System Administrators",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Natural Language :: English",
+]
+license = { text = "Apache License 2.0" }
+dynamic = ["version"]
+dependencies = [
+    "defusedxml>=0.7.1,<1",
+    "requests>=2.27.1,<3",
+    "python-dateutil>=2.8.1,<3",
+    "botocore>=1.23.50,<2",
+    "lxml>=4.6.5,<5",
+]
+
+[project.optional-dependencies]
+dev = [
+    "black>=22.8.0,<23",
+    "click>=8.0.1,<9",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/aiven/rpm-s3-mirror"
+"Bug Tracker" = "https://github.com/aiven/rpm-s3-mirror/issues"
+
+[project.scripts]
+rpm_s3_mirror = "rpm_s3_mirror.__main__:main"
+
+[tool.hatch.version]
+source = "vcs"
+
+[tool.hatch.build.hooks.vcs]
+version-file = "rpm_s3_mirror/version.py"
+
+
 # NOTE: you have to use single-quoted strings in TOML for regular expressions.
 # It's the equivalent of r-strings in Python.  Multiline strings are treated as
 # verbose regular expressions by Black.  Use [ ] to denote a significant space
