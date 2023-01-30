@@ -1,6 +1,3 @@
-short_ver = 0.0.1
-long_ver = $(shell git describe --long 2>/dev/null || echo $(short_ver)-0-unknown-g`git describe --always`)
-
 all:
 
 PYTHON ?= python3
@@ -11,24 +8,6 @@ PYLINT=$(shell which pylint 2> /dev/null || which pylint-3)
 clean:
 	$(RM) -r *.egg-info/ build/ dist/ rpm/
 	$(RM) ../rpm_s3_mirror_* test-*.xml
-
-rpm:
-	git archive --output=rpm_s3_mirror-rpm-src.tar --prefix=rpm_s3_mirror/ HEAD
-	rpmbuild -bb rpm_s3_mirror.spec \
-		--define '_topdir $(PWD)/rpm' \
-		--define '_sourcedir $(CURDIR)' \
-		--define 'major_version $(short_ver)' \
-		--define 'minor_version $(subst -,.,$(subst $(short_ver)-,,$(long_ver)))'
-	$(RM) rpm_s3_mirror-rpm-src.tar
-
-build-dep-fed:
-	sudo dnf -y install --best --allowerasing \
-		python3-black \
-		python3-defusedxml \
-		python3-requests \
-		python3-dateutil \
-		python3-botocore \
-		python3-lxml
 
 test: copyright lint unittest
 

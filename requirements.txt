@@ -1,5 +1,0 @@
-defusedxml
-requests
-python-dateutil
-botocore
-lxml
