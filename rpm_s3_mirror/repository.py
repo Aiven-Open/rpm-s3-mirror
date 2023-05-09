@@ -32,7 +32,7 @@ namespaces = {
 
 
 def safe_parse_xml(xml_bytes: bytes) -> Element:
-    safe_parser = XMLParser(resolve_entities=False)
+    safe_parser = XMLParser(huge_tree=True, resolve_entities=False)
     return fromstring(xml_bytes, parser=safe_parser)
 
 
