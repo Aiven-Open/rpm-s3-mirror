@@ -1,6 +1,7 @@
 # Copyright (c) 2020 Aiven, Helsinki, Finland. https://aiven.io/
 import dataclasses
 import lzma
+import zstd
 import re
 import subprocess
 from abc import abstractmethod
@@ -16,6 +17,7 @@ from dateutil.parser import parse
 from tempfile import TemporaryDirectory
 import os
 import shutil
+from pathlib import Path
 from os.path import join, basename
 
 import gzip
@@ -211,6 +213,15 @@ class XZUpdateInfoSection(UpdateInfoSection):
         )
 
 
+def decompress(filename: Path | str) -> bytes:
+    try:
+        with open(filename, "rb") as f:
+            return zstd.decompress(f.read())
+    except zstd.Error:
+        with gzip.open(filename) as f:
+            return f.read()
+
+
 class ZCKUpdateInfoSection(UpdateInfoSection):
     def _read(self):
         return subprocess.check_output(["unzck", self.path, "--stdout"])
@@ -348,19 +359,18 @@ class RPMRepository:
     def _rewrite_primary(self, temp_dir, primary: RepodataSection):
         with self._req(self.session.get, path=primary.location, stream=True) as request:
             local_path = download_repodata_section(primary, request, temp_dir)
-            with gzip.open(local_path) as f:
-                file_bytes = f.read()
-                primary_xml = safe_parse_xml(xml_bytes=file_bytes)
-                open_checksum = sha256(content=file_bytes)
-                open_size = len(file_bytes)
-                for package_element in primary_xml:
-                    location = package_element.find("common:location", namespaces=namespaces)
-                    # As our S3 structure is https://<base-repo>/snapshots/<snapshot-uuid>/, and the "location"
-                    # attribute of the packages in primary.xml references a path relative to the root like:
-                    # "Packages/v/vim.rmp", we need to rewrite this location to point to back a few directories
-                    # from our snapshot root.
-                    relative_location = f"../../{location.get('href')}"
-                    location.set("href", relative_location)
+            file_bytes = decompress(local_path)
+            primary_xml = safe_parse_xml(xml_bytes=file_bytes)
+            open_checksum = sha256(content=file_bytes)
+            open_size = len(file_bytes)
+            for package_element in primary_xml:
+                location = package_element.find("common:location", namespaces=namespaces)
+                # As our S3 structure is https://<base-repo>/snapshots/<snapshot-uuid>/, and the "location"
+                # attribute of the packages in primary.xml references a path relative to the root like:
+                # "Packages/v/vim.rmp", we need to rewrite this location to point to back a few directories
+                # from our snapshot root.
+                relative_location = f"../../{location.get('href')}"
+                location.set("href", relative_location)
 
             # Now we have rewritten our XML file the checksums no longer match, so calculate some new ones (along with
             # size etc from above).
@@ -404,8 +414,7 @@ class RPMRepository:
         with self._req(self.session.get, path=primary.location, stream=True) as request:
             with TemporaryDirectory(prefix="/var/tmp/") as temp_dir:
                 local_path = download_repodata_section(primary, request, temp_dir)
-                with gzip.open(local_path) as f:
-                    return PackageList(base_url=self.base_url, packages_xml=f.read())
+                return PackageList(base_url=self.base_url, packages_xml=decompress(local_path))
 
     def parse_repomd(self, xml: Element) -> Dict[str, RepodataSection]:
         sections = {}

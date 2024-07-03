@@ -1,7 +1,7 @@
 # Copyright (c) 2020 Aiven, Helsinki, Finland. https://aiven.io/
 import pytest
-
-from rpm_s3_mirror.repository import Package, PackageList, RPMRepository, safe_parse_xml
+import tempfile
+from rpm_s3_mirror.repository import Package, PackageList, RPMRepository, safe_parse_xml, decompress
 
 TEST_BASE_URL = "https://some.repo/some/path"
 CHANGED_PACKAGE_NAME = "GMT"
@@ -91,3 +91,23 @@ def test_parse_repomd_xml(repomd_xml):
 def test_reject_http_upstream_repository():
     with pytest.raises(ValueError):
         RPMRepository(base_url="http://dangerdanger")
+
+
+GZIP_CONTENT = b"\x1f\x8b\x08\x08\xe0\x84\x84f\x00\x03content\x00+\xc8/I,\xc9\xe7\x02\x00I:&V\x07\x00\x00\x00"
+ZSTD_CONTENT = b"(\xb5/\xfd$\x079\x00\x00potato\nE.\xa8%"
+UNCOMPRESSED_CONTENT = b"potato\n"
+
+
+@pytest.mark.parametrize(
+    ["content", "expected"],
+    [
+        pytest.param(GZIP_CONTENT, UNCOMPRESSED_CONTENT, id="gzip"),
+        pytest.param(ZSTD_CONTENT, UNCOMPRESSED_CONTENT, id="zstd"),
+    ],
+)
+def test_decompress(content: bytes, expected: bytes):
+    with tempfile.NamedTemporaryFile() as f:
+        f.write(content)
+        f.flush()
+        actual = decompress(f.name)
+        assert actual == expected
