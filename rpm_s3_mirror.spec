@@ -13,7 +13,7 @@ Requires:       python3-requests
 Requires:       python3-dateutil
 Requires:       python3-botocore
 Requires:       python3-lxml
-Requires:       python3-zstd
+Requires:       python3-zstandard
 Requires:       systemd
 Requires:       zchunk
 

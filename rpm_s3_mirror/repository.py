@@ -1,7 +1,7 @@
 # Copyright (c) 2020 Aiven, Helsinki, Finland. https://aiven.io/
 import dataclasses
 import lzma
-import zstd
+import zstandard
 import re
 import subprocess
 from abc import abstractmethod
@@ -215,9 +215,9 @@ class XZUpdateInfoSection(UpdateInfoSection):
 
 def decompress(filename: Path | str) -> bytes:
     try:
-        with open(filename, "rb") as f:
-            return zstd.decompress(f.read())
-    except zstd.Error:
+        with zstandard.open(filename) as f:
+            return f.read()
+    except zstandard.ZstdError:
         with gzip.open(filename) as f:
             return f.read()
 
