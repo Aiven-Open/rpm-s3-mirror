@@ -30,7 +30,7 @@ dependencies = [
     "requests>=2.27.1,<3",
     "python-dateutil>=2.8.1,<3",
     "botocore>=1.23.50,<2",
-    "lxml>=4.6.5,<5",
+    "lxml>=4.6.5",
     "zstandard>=0.21.0",
 ]
 
