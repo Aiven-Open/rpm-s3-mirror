@@ -161,8 +161,10 @@ class UpdateInfoSection:
             return ZCKUpdateInfoSection(path, scratch_dir)
         elif path.endswith(".xz"):
             return XZUpdateInfoSection(path, scratch_dir)
+        elif path.endswith(".zst"):
+            return ZSTUpdateInfoSection(path, scratch_dir)
         else:
-            raise ValueError("Only xz and zck files supported")
+            raise ValueError("Only xz, zck and zst files supported")
 
     @abstractmethod
     def _read(self) -> bytes:
@@ -220,6 +222,32 @@ def decompress(filename: Path | str) -> bytes:
     except zstandard.ZstdError:
         with gzip.open(filename) as f:
             return f.read()
+
+
+class ZSTUpdateInfoSection(UpdateInfoSection):
+    def _read(self):
+        return decompress(self.path)
+
+    def _compress(self, root, open_size, open_checksum):
+        stripped_path = os.path.join(self.scratch_dir, "stripped-zst.xml")
+        ElementTree(root).write(stripped_path)
+
+        compressed_xml = zstandard.compress(tostring(root, encoding="utf-8"))
+        compressed_sha256 = sha256(compressed_xml)
+        compressed_size = len(compressed_xml)
+
+        local_path = os.path.join(self.scratch_dir, f"{compressed_sha256}-updateinfo.xml.zst")
+        with open(local_path, "wb+") as out:
+            out.write(compressed_xml)
+        return SectionMetadata(
+            open_checksum=open_checksum,
+            checksum=compressed_sha256,
+            checksum_type="sha256",
+            size=compressed_size,
+            open_size=open_size,
+            local_path=local_path,
+            location=f"repodata/{basename(local_path)}",
+        )
 
 
 class ZCKUpdateInfoSection(UpdateInfoSection):
