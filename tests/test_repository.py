@@ -1,7 +1,9 @@
 # Copyright (c) 2020 Aiven, Helsinki, Finland. https://aiven.io/
+from pathlib import Path
+
 import pytest
 import tempfile
-from rpm_s3_mirror.repository import Package, PackageList, RPMRepository, safe_parse_xml, decompress
+from rpm_s3_mirror.repository import Package, PackageList, RPMRepository, UpdateInfoSection, safe_parse_xml, decompress
 
 TEST_BASE_URL = "https://some.repo/some/path"
 CHANGED_PACKAGE_NAME = "GMT"
@@ -111,3 +113,18 @@ def test_decompress(content: bytes, expected: bytes):
         f.flush()
         actual = decompress(f.name)
         assert actual == expected
+
+
+@pytest.mark.parametrize(
+    ["filename", "expected_open_checksum"],
+    [
+        pytest.param("example-updateinfo.xml.zst", "79201820d67e2e0d02f76842c8eaa0319e2eb1bdc84e24a06edbd0eb0923ec20", id="zstd"),
+        pytest.param("example-updateinfo.xml.zck", "79201820d67e2e0d02f76842c8eaa0319e2eb1bdc84e24a06edbd0eb0923ec20", id="zck"),
+    ],
+)
+def test_rewrite_updateinfo(filename: str, expected_open_checksum: str):
+    xml_path = Path(__file__).parent.absolute() / "resources" / filename
+    with tempfile.TemporaryDirectory() as temp_dir:
+        update_section = UpdateInfoSection.from_path(path=str(xml_path), scratch_dir=temp_dir)
+        rewritten_section = update_section.strip_to_arches(arches=("x86_64",))
+        assert rewritten_section.open_checksum == expected_open_checksum
