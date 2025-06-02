@@ -57,6 +57,9 @@ def main():
         config = JSONConfig(path=args.config)
     elif args.env:
         config = ENVConfig()
+    else:
+        print("Must provide either --config or --env")
+        sys.exit(1)
 
     if args.verbose:
         logging.basicConfig(level=logging.DEBUG)

@@ -37,6 +37,7 @@ class S3DirectoryNotFound(Exception):
 class S3:
     def __init__(
         self,
+        *,
         aws_access_key_id: str,
         aws_secret_access_key: str,
         bucket_name: str,
