@@ -4,6 +4,7 @@ from pathlib import Path
 import pytest
 import tempfile
 from rpm_s3_mirror.repository import Package, PackageList, RPMRepository, UpdateInfoSection, safe_parse_xml, decompress
+from rpm_s3_mirror.util import validate_checksum
 
 TEST_BASE_URL = "https://some.repo/some/path"
 CHANGED_PACKAGE_NAME = "GMT"
@@ -132,3 +133,10 @@ def test_rewrite_updateinfo(filename: str, expected_open_checksum: str):
         update_section = UpdateInfoSection.from_path(path=str(xml_path), scratch_dir=temp_dir)
         rewritten_section = update_section.strip_to_arches(arches=("x86_64",))
         assert rewritten_section.open_checksum == expected_open_checksum
+
+
+def test_can_validate_repomd_sha(repomd_adoptium_xml: bytes):
+    repository = RPMRepository(base_url=TEST_BASE_URL)
+    repomd = repository.parse_repomd(safe_parse_xml(repomd_adoptium_xml))
+    other = repomd["other"]
+    validate_checksum(Path(__file__).parent / "resources" / other.location, other.checksum_type, other.checksum)
