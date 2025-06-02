@@ -118,8 +118,12 @@ def test_decompress(content: bytes, expected: bytes):
 @pytest.mark.parametrize(
     ["filename", "expected_open_checksum"],
     [
-        pytest.param("example-updateinfo.xml.zst", "79201820d67e2e0d02f76842c8eaa0319e2eb1bdc84e24a06edbd0eb0923ec20", id="zstd"),
-        pytest.param("example-updateinfo.xml.zck", "79201820d67e2e0d02f76842c8eaa0319e2eb1bdc84e24a06edbd0eb0923ec20", id="zck"),
+        pytest.param(
+            "example-updateinfo.xml.zst", "79201820d67e2e0d02f76842c8eaa0319e2eb1bdc84e24a06edbd0eb0923ec20", id="zstd"
+        ),
+        pytest.param(
+            "example-updateinfo.xml.zck", "79201820d67e2e0d02f76842c8eaa0319e2eb1bdc84e24a06edbd0eb0923ec20", id="zck"
+        ),
     ],
 )
 def test_rewrite_updateinfo(filename: str, expected_open_checksum: str):
