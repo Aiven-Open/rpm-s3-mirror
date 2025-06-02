@@ -48,5 +48,6 @@ jobs:
 
     - name: Tests
       run: |
+        sudo apt install zchunk
         pip install pytest
         make unittest
