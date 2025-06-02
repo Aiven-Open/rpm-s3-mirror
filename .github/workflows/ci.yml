@@ -43,7 +43,7 @@ jobs:
 
     - name: Linting with pylint
       run: |
-        pip install pytest pylint pylint-quotes
+        pip install pytest pylint
         make pylint
 
     - name: Tests

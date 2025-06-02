@@ -184,7 +184,7 @@ class Mirror:
                     )
                 except Exception as e:
                     self._try_remove_snapshots(snapshot_id=snapshot_id)
-                    raise Exception("Failed to snapshot repositories") from e
+                    raise Exception("Failed to snapshot repositories") from e  # pylint: disable=broad-exception-raised
 
     def list_snapshots(self):
         snapshots = defaultdict(dict)
