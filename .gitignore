@@ -18,3 +18,4 @@ __pycache__/
 .vagrant
 
 rpm_s3_mirror/version.py
+config.json

@@ -15,6 +15,7 @@ def load_resource_xml(filename):
 PACKAGE_XML = load_resource_xml(filename="primary.xml")
 PACKAGE_CHANGED_XML = load_resource_xml(filename="primary-one-changed.xml")
 REPOMD_XML = load_resource_xml(filename="repomd.xml")
+REPOMD_ADOPTIUM_XML = load_resource_xml(filename="repomd-adoptium.xml")
 
 
 @pytest.fixture(name="package_list_xml")
@@ -30,6 +31,11 @@ def package_list_changed_xml():
 @pytest.fixture(name="repomd_xml")
 def repomd_xml():
     return REPOMD_XML
+
+
+@pytest.fixture(name="repomd_adoptium_xml")
+def repomd_adoptium_xml():
+    return REPOMD_ADOPTIUM_XML
 
 
 @pytest.fixture(name="mirror_config")
